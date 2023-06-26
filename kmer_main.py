@@ -9,46 +9,6 @@ from multiprocessing import freeze_support
 import multiprocessing
 
 
-import multiprocessing
-
-def main(k_mer, path, output, msg, threads):
-    """
-    Generate k-mer frequencies for all files in a directory and store them in a csv file.
-
-    Args:
-        - k_mer (int): The value of k to use for generating k-mer frequencies.
-        - path (str): The directory path containing the files to process.
-        - output (str): The base file name to use for the output csv files.
-        - msg (str): An additional message to add to the file name.
-        - threads (int): Number of processes for multiprocessing
-
-    Returns:
-        None.
-    """
-    # Create the directories if they don't already exist
-    output_for_file = os.path.join(output,msg)
-    amr.create_folder(output, msg)
-
-    file_groups, df_groups = amr.divide_files_into_groups(path, threads)
-
-    # Create a multiprocessing Pool with the desired number of processes
-    with multiprocessing.Pool(processes=threads) as pool:
-        # Map the tasks to the pool of processes
-        results = pool.starmap(amr.process_files_multithread, zip(file_groups, df_groups, [k_mer]*threads))
-
-    # Create the ultron_df dataframe
-    ultron_df = pd.DataFrame()
-    # Store the columns of ultron_df in a set for faster membership checking
-    ultron_columns = set(ultron_df.columns)
-    
-    ultron_df = amr.patch_dataframe(results, ultron_df, ultron_columns)
-
-
-    ultron_df.to_csv(os.path.join(output_for_file, 'kmer'+str(k_mer)+'.csv'), index=True, sep = ';')    
-
-
-        
-
 
 
 
@@ -81,11 +41,18 @@ if __name__ == '__main__':
     #python A_kmerExtract.py -f __main__ -k 5 -p scaffold_genes\drug_target -o lib\kmer\kmer_genes -t dt
     #python A_kmerExtract.py -f __main__ -k 5 -p scaffold_genes\transporter -o lib\kmer\kmer_genes -t tpt
     #python A_kmerExtract.py -f __main__ -k 5 -p scaffold_genes\virulence_factor -o lib\kmer\kmer_genes -t vf
-    if func == "main":
-        main(args.k_mer, args.path,os.path.join(os.getcwd(),args.output), msg=args.type, threads=int(args.cores))
-    if func == "gene":
+    if func == "kmer_mult":
+        amr.generate_kmer_frequencies(k_mer=args.k_mer, 
+                                      path=os.path.join(os.getcwd(),args.path),
+                                      output=os.path.join(os.getcwd(),args.output), 
+                                      msg=args.type, 
+                                      threads=int(args.cores), 
+                                      function_mult=amr.kmer_of_files_modular)
+    if func == "gene-scaffold":
         #python A_kmerExtract.py -f __gene__ -p lib\genes_amr -o scaffold_genes
         #python A_kmerExtract.py -f __main__ -p scaffold_genes -o lib\kmer\kmer_genes -k 3
-        amr.parse_fasta(os.path.join(os.getcwd(),args.path),    
-                        os.path.join(os.getcwd(),      
-                        args.output))
+        amr.parse_fasta(fasta_folder=os.path.join(os.getcwd(),args.path),    
+                        output_path=os.path.join(os.getcwd(),args.output))
+    if func == "wgs-scaffold":
+        amr.scaffold_fasta_file(file_path=os.path.join(os.getcwd(),args.path), 
+                                output=os.path.join(os.getcwd(),args.output))
