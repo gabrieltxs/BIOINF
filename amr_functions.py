@@ -756,4 +756,33 @@ def patch_dataframe(results, main_df, main_columns):
     
     return main_df
 
+def scaffold_fasta_file(file_path, output):
+    """
+    Processes a FASTA file into a scaffold of the isolate, extracts relevant information, and writes output to specified folder.
 
+    Args:
+        file_path (str): Path to the input FASTA file.
+        output (str): Path to the output folder.
+
+    Output:
+        None
+    """
+    # Create the output folder if it doesn't exist
+    create_folder(os.getcwd(), output)
+
+    # Read the input FASTA file
+    with open(file_path, 'r') as fasta:
+        for item in tqdm(fasta):
+            if item[0] == '>':
+                # Extract information from the header line
+                n_contig = item.split('contig_')[1].split()[0]
+                fna_name = item.split('[')[1].split('|')[0]
+
+                if n_contig == '1':
+                    # Create or append to the output file for the first contig
+                    output_file = open(os.path.join(output, fna_name.strip() + '.fasta'), 'a')
+                    output_file.close()
+            else:
+                # Write sequence data to the respective output file
+                with open(os.path.join(output, fna_name.strip() + '.fasta'), 'w') as output_file:
+                    output_file.write(item)

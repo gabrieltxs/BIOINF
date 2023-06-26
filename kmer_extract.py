@@ -40,19 +40,9 @@ def main(k_mer, path, output, msg, threads):
     ultron_df = pd.DataFrame()
     # Store the columns of ultron_df in a set for faster membership checking
     ultron_columns = set(ultron_df.columns)
-    # Iterate over the list of dataframes
-    for df in results:
-        # Get the missing columns in ultron_df
-        missing_columns = [col for col in df.columns if col not in ultron_columns]
-        # Add the missing columns to ultron_df with None as the default value
-        ultron_df = ultron_df.reindex(columns=ultron_df.columns.union(missing_columns), fill_value=None)
-        
-        for line in df.index.tolist():
+    
+    ultron_df = amr.patch_dataframe(results, ultron_df, ultron_columns)
 
-            for j in df.keys():# Iterate over k-mers in the current file
-                value = df.loc[line, j]
-                if not np.isnan(value):
-                    ultron_df.at[line, j] = int(value)# Assign the k-mer frequency to the corresponding cell in the dataframe
 
     ultron_df.to_csv(os.path.join(output_for_file, 'kmer'+str(k_mer)+'.csv'), index=True, sep = ';')    
 

@@ -7,36 +7,22 @@ import argparse
 import amr_functions as amr
 
 
-def main(file_name):
-    path = os.path.join('D:\\OneDrive\\Documentos\\OneDrive\\Documentos\\Trabalho de Conclusão de Curso\\DATASET\\', file_name)
+def main(file_path, output):
 
-    amr.create_folder(os.getcwd(), 'scaffold')
+    #Confirms the creation of the output folder
+    amr.create_folder(os.getcwd(), output)
 
-    if not os.path.exists('scaffold'):
-        os.mkdir('scaffold')
-
-    with open(path, 'r') as fasta, open('scaffold\\Pseudomonas aeruginosa strain CH4443.fna', 'w') as output_file:
-        for item in tqdm(fasta):
-            if item[0] == '>':
-                n_contig = item.split('contig_')[1].split()[0]
-
-                if n_contig == '1':
-                    output_file.close()
-
-                    fna_name = item.split('[')[1].split('|')[0]
-                    output_file = open(os.path.join('scaffold', fna_name.strip() + '.fna'), 'w')
-            else:
-                output_file.write(item)
-
+    #Process fasta file into a scaffold for each isolate
+    amr.scaffold_fasta_file(file_path, output)
 
 
 if __name__ == '__main__':
 
     
-
     parser = argparse.ArgumentParser(description='Process the input FASTA file.')
-    parser.add_argument("-f", "--filename", default=os.path.join(os.getcwd(), 'results'),
-        help="The output results path argument (default: 'results' in the current directory)")
-    parser.add_argument('file_name', type=str, help='Name of the input FASTA file')
+    parser.add_argument("-f", "--filepath", default=os.path.join(os.getcwd(), 'raw_data\wgs\wgs-401.fasta'),
+        help="Path to the input raw FASTA file (default: 'raw_data\wgs\wgs-401.fasta' in the current directory)")
+    parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'scaffold'),
+        help="Path to the scaffold output for each isolate (default: 'scaffold' in the current directory)")
     args = parser.parse_args()
-    main(args.file_name)
+    main(args.filepath, args.output)
