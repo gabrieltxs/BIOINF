@@ -839,7 +839,7 @@ def scaffold_fasta_file(file_path, output):
                 with open(os.path.join(output, fna_name.strip() + '.fasta'), 'w') as output_file:
                     output_file.write(item)
 
-def generate_kmer_frequencies_mult(k_mer, path, output, msg, threads, function_mult):
+def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, function_mult):
     """
     Generate k-mer frequencies for all files in a directory and store them in a CSV file.
     Requires a modular function to multiprocess.
@@ -848,7 +848,7 @@ def generate_kmer_frequencies_mult(k_mer, path, output, msg, threads, function_m
         k_mer (int): The value of k to use for generating k-mer frequencies.
         path (str): The directory path containing the files to process.
         output (str): The base file name to use for the output CSV files.
-        msg (str): Name of the folder to be created to store the output.
+        folder (str): Name of the folder to be created to store the output.
         threads (int): Number of processes for multiprocessing.
         function_mult (function): Function to process files.
 
@@ -856,7 +856,7 @@ def generate_kmer_frequencies_mult(k_mer, path, output, msg, threads, function_m
         None
     """
     # Create the directories if they don't already exist
-    output_for_file = os.path.join(output, msg)
+    output_for_file = os.path.join(output, folder)
     os.makedirs(output_for_file, exist_ok=True)
 
     # Divide files into groups for parallel processing
