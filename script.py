@@ -9,14 +9,14 @@ def run_scaffold(main, file_path, output_path):
     subprocess.call(command, shell=True)
     print(f"Command completed: {command}")
 
-def run_kmer_extraction(main, file_path, output_path, k_value, foldername, core_num):
-    command = f"python kmer_main.py -f {main} -k {k_value} -p {file_path} -o {output_path} -fn {foldername} -c {core_num}"
+def run_kmer_extraction(main, file_path, output_path, k_value, foldername, core_num, wgs):
+    command = f"python kmer_main.py -f {main} -k {k_value} -p {file_path} -o {output_path} -fn {foldername} -c {core_num}  -w {wgs}"
     print(f"Running command: {command}")
     subprocess.call(command, shell=True)
     print(f"Command completed: {command}")
 
 
-json_file = "start_data copy.json"
+json_file = "start_data.json"
 json_path = os.path.join(os.getcwd(), json_file)
 json_data = open(json_path)
 
@@ -36,6 +36,7 @@ cores = None
 path_list = {}
 foldername_list = {}
 func_list = {}
+wgs_list = {}
 
 # Assign values to variables or dictionaries based on the context
 for key, value in data['scaffold'].items():
@@ -50,7 +51,7 @@ for key, value in data['scaffold'].items():
 
 
 
-total_commands = len(path_list) 
+"""total_commands = len(path_list) 
 completed_commands = 0
 
 for i, func_name in enumerate(func_list):
@@ -59,7 +60,7 @@ for i, func_name in enumerate(func_list):
     completed_commands += 1
     progress = (completed_commands / total_commands) * 100
     print(f"Progress: {progress:.2f}%")
-
+"""
 
 
 # Assign values to variables or dictionaries based on the context
@@ -69,6 +70,8 @@ for key, value in data['kmer'].items():
             path_list = value['value']
         elif key == 'foldername':
             foldername_list = value['value']
+        elif key == 'wgs':
+            wgs_list = value['value']
     else:
         if key == 'k_mer':
             k_mer = value['value']
@@ -85,7 +88,11 @@ completed_commands = 0
 
 for i, path_name in enumerate(path_list):
     foldername = foldername_list[i]
-    run_kmer_extraction(func, path_name, output, k_mer, foldername, cores)
+    if foldername == 'wgs':
+        run_kmer_extraction(func, path_name, output, k_mer, foldername, cores, "true")
+    else:
+        run_kmer_extraction(func, path_name, output, k_mer, foldername, cores, "false")
+   
     completed_commands += 1
     progress = (completed_commands / total_commands) * 100
     print(f"Progress: {progress:.2f}%")
