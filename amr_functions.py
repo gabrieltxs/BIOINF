@@ -284,7 +284,7 @@ def create_folder(directory, folder):
     else:
         print(f"Folder '{folder}' already exists in directory:", directory)
 
-def parse_fasta(fasta_folder: str, output_path: str) -> None:
+def scaffold_gene(fasta_folder: str, output_path: str) -> None:
     """
     Parse a FASTA file and split its sequences by strain name into separate output files.
 
@@ -516,7 +516,72 @@ def update_dataframe_with_kmer_freq(dataframe, file_name, kmer_freq):
     return dataframe
 
 
-def kmer_of_files_modular(file_list, dataframe, k, wgs):
+def kmer_of_files_modular_genes(file_list, dataframe, k):
+    """
+    Process a list of files and update a dataframe with k-mer frequencies.
+    The modular aspect of this function is used to run in multiprocess exec.
+    
+    Args:
+        file_list (list): List of file paths to be processed.
+        dataframe (pandas.DataFrame): Existing dataframe to be updated.
+        k (int): k value of the chosen k-mer
+        wgs (bool): boolean value to specify if it is wgs or not
+
+    Returns:
+        pandas.DataFrame: Updated dataframe with k-mer frequencies.
+    """
+    file_names = []  # Initialize an empty list to store file names
+    
+    for file in tqdm(file_list, desc='Strain reading '):  # Iterate through the files in the file list
+
+        kmer_freq = {}
+        # Open the current file
+        target_file = open(file)  
+        # Select the string of the name of the file
+        file_name = file.split('\\')[len(file.split('\\'))-1] 
+        # Add the current file name to the list
+        file_names.append(file_name)  
+        
+        for line in target_file.readlines():  # Iterate through each line in the current file
+
+            line = line.strip()  # Remove leading and trailing whitespaces from the line
+
+            if line.startswith('>') or line.startswith('\n'):  # If the line starts with '>' or is empty
+                pass  # Skip the line and continue to the next iteration
+
+            else: # else execute k-mer analysis and 
+                # Remove whitespaces within the line and concatenate the characters
+                seq = "".join(line.split())   
+                # Generate k-mer frequencies for the sequence using a defined function
+                kmer_freq_new = generate_kmers(seq, k) 
+                # Merge dictionaries together
+                kmer_freq = merge_dicts(kmer_freq_new, kmer_freq) 
+                # Sort the k-mer frequencies dictionary by keys
+                kmer_freq = dict(sorted(kmer_freq.items()))  
+                # Get the column keys of the full dataframe
+                keys = dataframe.keys()  
+                # Initialize an empty list to store existing k-mers
+                kmer_existed = []  
+                # Adds missing k-mers to the list of existing k-mers.
+                kmer_existed = add_missing_kmers(kmer_freq=kmer_freq,
+                                                keys=keys,
+                                                kmer_existed=kmer_existed)
+                # Create a new dataframe with columns for existing k-mers
+                df = pd.DataFrame(columns=kmer_existed)  
+                # Concatenate the new dataframe with the full dataframe
+                dataframe = pd.concat([dataframe, df], axis=1)  
+
+        # Updates the corresponding cells in the dataframe with the k-mer frequencies.
+        dataframe = update_dataframe_with_kmer_freq(dataframe=dataframe,
+                                                    file_name=file_name,
+                                                    kmer_freq=kmer_freq)
+
+        target_file.close()  # Close the current file
+        file_names.pop()  # Remove the current file name from the list
+
+    return dataframe  # Return the updated full dataframe
+
+def kmer_of_files_modular_wgs(file_list, dataframe, k):
     """
     Process a list of files and update a dataframe with k-mer frequencies.
     The modular aspect of this function is used to run in multiprocess exec.
@@ -534,9 +599,7 @@ def kmer_of_files_modular(file_list, dataframe, k, wgs):
     
     
 
-    if wgs:
-        
-        kmer_freq = {}
+    for file in tqdm(file_list, desc='Strain reading '):  # Iterate through the files in the file list
         # Open the current file
         target_file = open(file)  
         # Select the string of the name of the file
@@ -551,96 +614,47 @@ def kmer_of_files_modular(file_list, dataframe, k, wgs):
         # Create a new row in the pandas DataFrame to store the k-mer frequencies of the current file
         df_row = pd.DataFrame(index=file_names)
 
-        for file in tqdm(file_list, desc='Strain reading '):  # Iterate through the files in the file list
+        ################################################################
+        # Generate the k-mer frequencies of the current file
+        read_tf = target_file.read()
+        sequence = "".join(read_tf.split())
 
-            ################################################################
-            # Generate the k-mer frequencies of the current file
-            read_tf = target_file.read()
-            sequence = "".join(read_tf.split())
+        # Generate k-mer frequencies for the sequence using a defined function
+        k_mer_freq = {}  # Initialize an empty dictionary to store k-mer frequencies
 
-            # Generate k-mer frequencies for the sequence using a defined function
-            k_mer_freq = {}  # Initialize an empty dictionary to store k-mer frequencies
+        for i in range(0, len(sequence) - k + 1):  # Iterate through the indices of the sequence to generate k-mers
+            k_mer = sequence[i:i + k]  # Extract the current k-mer from the sequence
 
-            for i in range(0, len(sequence) - k + 1):  # Iterate through the indices of the sequence to generate k-mers
-                k_mer = sequence[i:i + k]  # Extract the current k-mer from the sequence
+            if k_mer in k_mer_freq:  # If the k-mer is already present in the dictionary
+                k_mer_freq[k_mer] += 1  # Increment its frequency by 1
+            else:
+                k_mer_freq[k_mer] = 1  # Add the k-mer to the dictionary with a frequency of 1
 
-                if k_mer in k_mer_freq:  # If the k-mer is already present in the dictionary
-                    k_mer_freq[k_mer] += 1  # Increment its frequency by 1
-                else:
-                    k_mer_freq[k_mer] = 1  # Add the k-mer to the dictionary with a frequency of 1
+        k_mer_freq = dict(sorted(k_mer_freq.items()))
+        ################################################################
 
-            k_mer_freq = dict(sorted(k_mer_freq.items()))
-            ################################################################
+        # Check if the current k-mer is already present in the pandas DataFrame
+        existing_keys = dataframe.keys()
+        new_kmers = []
+        for ke in k_mer_freq.keys():
+            if ke not in existing_keys:
+                new_kmers.append(ke)
 
-            # Check if the current k-mer is already present in the pandas DataFrame
-            existing_keys = dataframe.keys()
-            new_kmers = []
-            for ke in k_mer_freq.keys():
-                if ke not in existing_keys:
-                    new_kmers.append(ke)
+        # Add a new column for the current k-mer in the pandas DataFrame
+        df = pd.DataFrame(columns=new_kmers)
+        dataframe = pd.concat([dataframe, df], axis=1)
+        dataframe = pd.concat([dataframe, df_row], axis=0)
 
-            # Add a new column for the current k-mer in the pandas DataFrame
-            df = pd.DataFrame(columns=new_kmers)
-            dataframe = pd.concat([dataframe, df], axis=1)
-            dataframe = pd.concat([dataframe, df_row], axis=0)
+        # Add the k-mer frequencies of the current file to the pandas DataFrame
+        for j in k_mer_freq.keys():
+            dataframe.at[file_name, j] = int(k_mer_freq[j])
+        ################################################################
 
-            # Add the k-mer frequencies of the current file to the pandas DataFrame
-            for j in k_mer_freq.keys():
-                dataframe.at[file_name, j] = int(k_mer_freq[j])
-            ################################################################
-
-            # Increment the counter variable and remove the name of the current file from the list of file names
-            file_names.pop()
-
-
-    else:
-        for file in tqdm(file_list, desc='Strain reading '):  # Iterate through the files in the file list
-            kmer_freq = {}
-            # Open the current file
-            target_file = open(file)  
-            # Select the string of the name of the file
-            file_name = file.split('\\')[len(file.split('\\'))-1] 
-            
-
-            # Creating a new row in the pandas DataFrame to store the k-mer frequencies of the current file
-            df_row = pd.DataFrame(index = file_names)
-            # Add the current file name to the list
-            file_names.append(file_name)  
-            for line in target_file.readlines():  # Iterate through each line in the current file
-
-                line = line.strip()  # Remove leading and trailing whitespaces from the line
-
-                if line.startswith('>') or line.startswith('\n'):  # If the line starts with '>' or is empty
-                    pass  # Skip the line and continue to the next iteration
-
-                else: # else execute k-mer analysis and 
-                    # Remove whitespaces within the line and concatenate the characters
-                    seq = "".join(line.split())   
-                    # Generate k-mer frequencies for the sequence using a defined function
-                    kmer_freq_new = generate_kmers(seq, k) 
-                    # Merge dictionaries together
-                    kmer_freq = merge_dicts(kmer_freq_new, kmer_freq) 
-                    # Sort the k-mer frequencies dictionary by keys
-                    kmer_freq = dict(sorted(kmer_freq.items()))  
-                    # Get the column keys of the full dataframe
-                    keys = dataframe.keys()  
-                    # Initialize an empty list to store existing k-mers
-                    kmer_existed = []  
-                    # Adds missing k-mers to the list of existing k-mers.
-                    kmer_existed = add_missing_kmers(kmer_freq=kmer_freq,
-                                                    keys=keys,
-                                                    kmer_existed=kmer_existed)
-                    # Create a new dataframe with columns for existing k-mers
-                    df = pd.DataFrame(columns=kmer_existed)  
-                    # Concatenate the new dataframe with the full dataframe
-                    dataframe = pd.concat([dataframe, df], axis=1)  
-
-                # Updates the corresponding cells in the dataframe with the k-mer frequencies.
-                dataframe = update_dataframe_with_kmer_freq(dataframe=dataframe,
-                                                        file_name=file_name,
-                                                        kmer_freq=kmer_freq)
-
+        # Increment the counter variable and remove the name of the current file from the list of file names
+        file_names.pop()
     return dataframe  # Return the updated full dataframe
+
+
 
 def normalize_dataframe(df):
     """
@@ -870,7 +884,7 @@ def patch_dataframe(results, main_df, main_columns):
     
     return main_df
 
-def scaffold_fasta_file(file_path, output):
+def scaffold_wgs(file_path, output):
     """
     Processes a FASTA file into a scaffold of the isolate, extracts relevant information, and writes output to specified folder.
 
@@ -882,7 +896,8 @@ def scaffold_fasta_file(file_path, output):
         None
     """
     # Create the output folder if it doesn't exist
-    create_folder(os.getcwd(), output, 'wgs')
+    output = os.path.join(output, 'wgs')
+    create_folder(os.getcwd(), output)
     os.chdir(file_path)
     fna_name=''
     # Read the input FASTA file
@@ -909,7 +924,7 @@ def scaffold_fasta_file(file_path, output):
                         output_file.write(line)
 
 
-def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, function_mult,wgs):
+def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, function_mult):
     """
     Generate k-mer frequencies for all files in a directory and store them in a CSV file.
     Requires a modular function to multiprocess.
@@ -937,7 +952,7 @@ def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, functio
     # Create a multiprocessing Pool with the desired number of processes
     with multiprocessing.Pool(processes=threads) as pool:
         # Map the tasks to the pool of processes
-        results = pool.starmap(function_mult, zip(file_groups, df_groups, [k_mer] * threads, [wgs] * threads))
+        results = pool.starmap(function_mult, zip(file_groups, df_groups, [k_mer] * threads))
 
     # Create the ultron_df dataframe
     ultron_df = pd.DataFrame()
@@ -949,3 +964,32 @@ def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, functio
 
     # Save ultron_df to a CSV file
     ultron_df.to_csv(os.path.join(output_for_file, 'kmer' + str(k_mer) + '.csv'), index=True, sep=';')
+
+
+def read_ascii_art(file_path):
+    """
+    Reads ASCII art from a text file and returns a dictionary with titles and content.
+
+    Args:
+        file_path (str): The path to the text file containing ASCII art.
+
+    Returns:
+        dict: A dictionary mapping titles to ASCII art content.
+    """
+
+    ascii_art_dict = {}
+
+    with open(file_path, 'r') as file:
+        content = file.read()
+
+        # Split the content into individual ASCII arts
+        ascii_arts = content.split('end\n\n')
+
+        for ascii_art in ascii_arts:
+            # Extract the title and content of each ASCII art
+            title, art = ascii_art.split('\n', 1)
+
+            # Remove leading/trailing whitespace and store in the dictionary
+            ascii_art_dict[title.strip()] = art
+
+    return ascii_art_dict
