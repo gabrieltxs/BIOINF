@@ -51,6 +51,10 @@
         "type": "int",
         "value": "16",
         "help": "The number of cores used (default: 4)"
+      },
+      "wgs": {
+        "value": ["true","false"],
+        "help": "The number of cores used (default: 4)"
       }
     }
 }
