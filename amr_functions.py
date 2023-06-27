@@ -417,7 +417,7 @@ def divide_files_into_groups(directory, num_groups):
     groups = []
     start_index = 0
 
-    for i in range(num_groups - 1):
+    for i in tqdm(range(num_groups - 1), desc='Dividing groups'):
         end_index = start_index + files_per_group
         groups.append(file_paths[start_index:end_index])
         start_index = end_index
@@ -541,7 +541,7 @@ def kmer_of_files_modular(file_list, dataframe, k):
         # Add the current file name to the list
         file_names.append(file_name)  
         
-        for line in target_file.readlines():  # Iterate through each line in the current file
+        for line in tqdm(target_file.readlines()):  # Iterate through each line in the current file
 
             line = line.strip()  # Remove leading and trailing whitespaces from the line
 
@@ -562,9 +562,9 @@ def kmer_of_files_modular(file_list, dataframe, k):
                 # Initialize an empty list to store existing k-mers
                 kmer_existed = []  
                 # Adds missing k-mers to the list of existing k-mers.
-                add_missing_kmers(kmer_freq=kmer_freq,
-                                  keys=keys,
-                                  kmer_existed=kmer_existed)
+                kmer_existed = add_missing_kmers(kmer_freq=kmer_freq,
+                                                keys=keys,
+                                                kmer_existed=kmer_existed)
                 # Create a new dataframe with columns for existing k-mers
                 df = pd.DataFrame(columns=kmer_existed)  
                 # Concatenate the new dataframe with the full dataframe
@@ -798,7 +798,7 @@ def patch_dataframe(results, main_df, main_columns):
         # Add the missing columns to main_df with None as the default value
         main_df = main_df.reindex(columns=main_df.columns.union(missing_columns), fill_value=None)
         
-        for line in df.index.tolist():
+        for line in tqdm(df.index.tolist(), desc='Patching dataframes together'):
             for j in df.keys():
                 # Iterate over k-mers in the current file
                 value = df.loc[line, j]
@@ -820,24 +820,32 @@ def scaffold_fasta_file(file_path, output):
         None
     """
     # Create the output folder if it doesn't exist
-    create_folder(os.getcwd(), output)
-
+    create_folder(os.getcwd(), output, 'wgs')
+    os.chdir(file_path)
+    fna_name=''
     # Read the input FASTA file
-    with open(file_path, 'r') as fasta:
-        for item in tqdm(fasta):
-            if item[0] == '>':
-                # Extract information from the header line
-                n_contig = item.split('contig_')[1].split()[0]
-                fna_name = item.split('[')[1].split('|')[0]
+    for file in tqdm(glob.glob("*"), desc="Processing files", unit="file"):
+        with open(file) as fasta:
+            print(f"\nOpening WGS File:{file}")
+            total_lines = sum(1 for _ in fasta)  # Count total lines in the file
+            fasta.seek(0)  # Reset file pointer to the beginning
+            print(f"\n{file} is open. {total_lines} lines")
 
-                if n_contig == '1':
-                    # Create or append to the output file for the first contig
-                    output_file = open(os.path.join(output, fna_name.strip() + '.fasta'), 'a')
-                    output_file.close()
-            else:
-                # Write sequence data to the respective output file
-                with open(os.path.join(output, fna_name.strip() + '.fasta'), 'w') as output_file:
-                    output_file.write(item)
+            for line_idx, line in enumerate(tqdm(fasta, total=total_lines, desc="Reading lines", unit="line", colour='green', leave=True)):
+                if line[0] == '>':
+                    # Extract information from the header line6
+                    n_contig = line.split('contig_')[1].split()[0]
+                    fna_name = line.split('[')[1].split('|')[0]
+
+                    if n_contig == '1':
+                        # Create or append to the output file for the first contig
+                        output_file = open(os.path.join(output, fna_name.strip() + '.fasta'), 'a')
+                        output_file.close()
+                else:
+                    # Write sequence data to the respective output file
+                    with open(os.path.join(output, fna_name.strip() + '.fasta'), 'a') as output_file:
+                        output_file.write(line)
+
 
 def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, function_mult):
     """
@@ -862,6 +870,7 @@ def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, functio
     # Divide files into groups for parallel processing
     file_groups, df_groups = divide_files_into_groups(path, threads)
 
+    print("Starting multiprocess...")
     # Create a multiprocessing Pool with the desired number of processes
     with multiprocessing.Pool(processes=threads) as pool:
         # Map the tasks to the pool of processes

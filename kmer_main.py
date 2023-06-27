@@ -16,23 +16,18 @@ import multiprocessing
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=5,
                     help="The k_mer argument (an integer from 2 to 11, default: 5)")
-parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold_genes\\antibiotic_resistance'),
+parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold\\wgs'),
                     help="The path argument (default: 'scaffold_genes' in the current directory)")
-parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'lib\kmer'),
+parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'lib\\kmer'),
                     help="The output path argument (default: 'lib_files\\kmer' in the current directory)")
-parser.add_argument("-f", "--func",  default='main-scaffold',
+parser.add_argument("-f", "--func",  default='kmer_sync',
                         help="The function argument (default: main) (Op.: kmer_mult, kmer_sync, main-scaffold, gene-scaffold)")
-parser.add_argument("-fn", "--foldername",  default='amr',
+parser.add_argument("-fn", "--foldername",  default='wgs',
                         help="The Name of the folder to be created to store the output (for ngs-specialtygenes) (default: amr)")
-parser.add_argument("-c", "--cores", type=int,  default='4',
-                        help="The type number of cores used (default: 4)")
+parser.add_argument("-c", "--cores", type=int,  default='8',
+                        help="The number of cores used (default: 4)")
 
 args = parser.parse_args()
-print("The value of the k_mer argument is:", args.k_mer)
-print("The value of the path argument is:", args.path)
-print("The value of the output path argument is:", args.output)
-print("The value of the func argument is:", args.func)
-print("The value of the foldername argument is:", args.foldername)
 func = args.func
 
 
@@ -45,10 +40,11 @@ if __name__ == '__main__':
     #Generate k-mer frequencies for all files in a directory and store them in a CSV file.
     #Requires a modular function to multiprocess.
     if func == "kmer_mult": #Faster
+    #python kmer_main.py -f kmer_mult -k 5 -p scaffold\wgs -o lib\kmer -fn wgs -c 16
         amr.generate_kmer_frequencies_mult(k_mer=args.k_mer, 
                                       path=os.path.join(os.getcwd(),args.path),
                                       output=os.path.join(os.getcwd(),args.output), 
-                                      folder=args.type, 
+                                      folder=args.foldername, 
                                       threads=int(args.cores), 
                                       function_mult=amr.kmer_of_files_modular)
         
@@ -56,6 +52,8 @@ if __name__ == '__main__':
     #The modular aspect of this function is used to run in multiprocess exec.
     #When used without multiprocess it may take a lot longer to complete, specially if k_mer >9
     if func == "kmer_sync": #Slower
+    #python kmer_main.py -f kmer_sync -k 5 -p scaffold\wgs -o lib\kmer -fn wgs -c 16
+
         # Get the current working directory and join it with the provided path
         directory = os.path.join(os.getcwd(), args.path)
         # Create an empty list to store file paths
@@ -79,5 +77,6 @@ if __name__ == '__main__':
         
     #Processes a FASTA file into a scaffold of the isolate, extracts relevant information, and writes output to specified folder.
     if func == "wgs-scaffold":
+        #python kmer_main.py -f wgs-scaffold -p raw_data\ngs-wgs -o scaffold
         amr.scaffold_fasta_file(file_path=os.path.join(os.getcwd(),args.path), 
                                 output=os.path.join(os.getcwd(),args.output))
