@@ -4,13 +4,12 @@ import amr_functions as amr
 
 
 def main(filename, input_path):
-
+    titles = {}
+    titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))
+    print(titles['gexp'])
     # Process specialty genes data
     result_df = amr.process_specialty_genes_data(filename, input_path)
 
-    # Print the resulting DataFrame
-    print("result_df:")
-    print(result_df)
 
 
 if __name__ == '__main__':
@@ -18,12 +17,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Process specialty genes data')
 
     # Add optional arguments with default values
-    parser.add_argument("-f", "--filename", type=str, default=os.path.join(os.getcwd(), 'lib\specialty_genes\specialty_genes.csv'),
+    parser.add_argument("-f", "--filename", type=str, default=os.path.join(os.getcwd(), 'raw_data\\gexp-specialtygenes\\specialty_genes.csv'),
                     help="Path to specialty genes CSV file, default: lib\specialty_genes\specialty_genes.csv)")
-    parser.add_argument("-i", "--input_path", type=str, default=os.path.join(os.getcwd(), 'scaffold_genes\\antibiotic_resistance'),
-                    help="Path to specialty genes CSV file, default: scaffold_genes\\antibiotic_resistance)")
+    parser.add_argument("-l", "--list_genomes", type=str, default=os.path.join(os.getcwd(), 'scaffold\\antibiotic_resistance'),
+                    help="Path to the list of the genomes names, default: scaffold\\antibiotic_resistance)")
 
     args = parser.parse_args()
 
     # Call the main function with the parsed arguments
-    main(args.filename, args.input_path)
+    main(args.filename, args.list_genomes)

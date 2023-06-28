@@ -1,0 +1,15 @@
+{
+    "filename": {
+      "value": 
+        "raw_data\\gexp-specialtygenes\\specialty_genes.csv"
+      ,
+      "help": "Path to specialty genes CSV file, default: scaffold_genes\\antibiotic_resistance)"
+    },
+    "list_genomes": {
+      "value": 
+        "scaffold\\antibiotic_resistance"
+      ,
+      "help": "Path to the list of the genomes names, default: scaffold\\antibiotic_resistance)"
+    }
+}
+  

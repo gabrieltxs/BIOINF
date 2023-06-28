@@ -515,7 +515,6 @@ def update_dataframe_with_kmer_freq(dataframe, file_name, kmer_freq):
         dataframe.at[file_name, j] = int(kmer_freq[j])
     return dataframe
 
-
 def kmer_of_files_modular_genes(file_list, dataframe, k):
     """
     Process a list of files and update a dataframe with k-mer frequencies.
@@ -653,8 +652,6 @@ def kmer_of_files_modular_wgs(file_list, dataframe, k):
         # Increment the counter variable and remove the name of the current file from the list of file names
         file_names.pop()
     return dataframe  # Return the updated full dataframe
-
-
 
 def normalize_dataframe(df):
     """
@@ -923,7 +920,6 @@ def scaffold_wgs(file_path, output):
                     with open(os.path.join(output, fna_name.strip() + '.fasta'), 'a') as output_file:
                         output_file.write(line)
 
-
 def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, function_mult):
     """
     Generate k-mer frequencies for all files in a directory and store them in a CSV file.
@@ -964,7 +960,6 @@ def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, functio
 
     # Save ultron_df to a CSV file
     ultron_df.to_csv(os.path.join(output_for_file, 'kmer' + str(k_mer) + '.csv'), index=True, sep=';')
-
 
 def read_ascii_art(file_path):
     """
