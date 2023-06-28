@@ -864,14 +864,14 @@ def patch_dataframe(results, main_df, main_columns):
     Returns:
         pd.DataFrame: The updated main DataFrame.
     """
-    for df in results:
+    for df in tqdm(results, desc='Patching dataframes together'):
         # Get the missing columns in main_df
         missing_columns = [col for col in df.columns if col not in main_columns]
         
         # Add the missing columns to main_df with None as the default value
         main_df = main_df.reindex(columns=main_df.columns.union(missing_columns), fill_value=None)
         
-        for line in tqdm(df.index.tolist(), desc='Patching dataframes together'):
+        for line in df.index.tolist():
             for j in df.keys():
                 # Iterate over k-mers in the current file
                 value = df.loc[line, j]
