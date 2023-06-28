@@ -1,0 +1,40 @@
+EDA for the 'Gene' column:
+Total number of genes: 215266
+Unique genes: 593
+
+Most frequent gene for each group in the Antibiotic Resistance column:
+MdtABC-TolC    1595
+OprB           1427
+MexAB-OprM     1231
+TriABC-OpmH    1203
+EmrAB-TolC      911
+MexPQ-OpmE      846
+MexXY-OMP       813
+MexVW-OprM      810
+kasA            808
+MexCD-OprJ      808
+Name: Gene, dtype: int64
+Most frequent gene for each group in the Drug Target column:
+phzD1    461
+oprD     442
+glyA     428
+opdK     423
+phzG     423
+ccpA     414
+lasR     411
+gmd      406
+nirS     406
+mexA     406
+Name: Gene, dtype: int64
+Most frequent gene for each group in the Virulence Factor column:
+PA0041    1843
+pvdD      1016
+phzA1      913
+exoY       869
+mucA       834
+flhB       826
+phzB1      814
+algW       806
+algU       806
+mucC       802
+Name: Gene, dtype: int64
