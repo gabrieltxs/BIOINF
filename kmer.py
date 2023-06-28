@@ -24,11 +24,11 @@ def str2bool(v):
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=5,
                     help="The k_mer argument (an integer from 2 to 11, default: 5)")
-parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold\\antibiotic_resistance'),
-                    help="The path argument (default: 'scaffold_genes' in the current directory)")
+parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold\\wgs'),
+                    help="The path argument (default: 'scaffold-folder' in the current directory)")
 parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'lib\\kmer'),
                     help="The output path argument (default: 'lib_files\\kmer' in the current directory)")
-parser.add_argument("-f", "--func",  default='kmer_mult_gene',
+parser.add_argument("-f", "--func",  default='kmer_mult_wgs',
                         help="The function argument (default: main) (Op.: kmer_mult, kmer_sync)")
 parser.add_argument("-fn", "--foldername",  default='amr',
                         help="The Name of the folder to be created to store the output (for ngs-specialtygenes) (default: amr)")
