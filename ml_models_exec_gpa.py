@@ -49,8 +49,8 @@ parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=8,
                     help="The path kmerX argument (default: 'lib/kmer' in the current directory)")'''
 parser.add_argument("-pk", "--pathk", default=os.path.join(os.getcwd(), 'lib\kmer'),
                     help="The path kmerX argument (default: 'lib/kmer' in the current directory)")
-parser.add_argument("-pf", "--pathf", default=os.path.join(os.getcwd(), 'lib\\processed'),
-                    help="The path features argument (default: 'lib/processed' in the current directory)")
+parser.add_argument("-pf", "--pathf", default=os.path.join(os.getcwd(), 'lib\\target'),
+                    help="The path target argument (default: 'lib/target' in the current directory)")
 parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'results'),
                     help="The output results path argument (default: 'results' in the current directory)")
 

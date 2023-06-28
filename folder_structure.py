@@ -12,11 +12,11 @@ if not os.path.exists(os.path.join(root_dir, "lib", "kmer")):
 else:
     print("Folder 'kmer' already exists in 'lib'")
 
-if not os.path.exists(os.path.join(root_dir, "lib", "processed")):
-    os.makedirs(os.path.join(root_dir, "lib", "processed"))
-    print("Folder 'processed' created successfully in 'lib'")
+if not os.path.exists(os.path.join(root_dir, "lib", "target")):
+    os.makedirs(os.path.join(root_dir, "lib", "target"))
+    print("Folder 'target' created successfully in 'lib'")
 else:
-    print("Folder 'processed' already exists in 'lib'")
+    print("Folder 'target' already exists in 'lib'")
 
 if not os.path.exists(os.path.join(root_dir, "results")):
     os.makedirs(os.path.join(root_dir, "results"))

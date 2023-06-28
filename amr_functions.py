@@ -723,8 +723,8 @@ def process_specialty_genes_data(filename, list_genomes_path):
     create_folder(os.path.join(os.getcwd(), 'lib'), 'genes_eda_data')
     output_genes_eda = os.path.join(os.getcwd(), 'lib', 'genes_eda_data')
 
-    create_folder(os.path.join(os.getcwd(), 'lib\kmer'), 'gexp')
-    df_input_ml = os.path.join(os.getcwd(), 'lib\kmer', 'gexp')
+    create_folder(os.path.join(os.getcwd(), 'lib'), 'gexp')
+    df_input_ml = os.path.join(os.getcwd(), 'lib', 'gexp')
 
     # Load SpecialtyGenes-WGS into a dataframe
     specialtygenes_df = pd.read_csv(filename)
