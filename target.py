@@ -18,7 +18,7 @@ def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'lib\\target'),
-                        help="The Output path argument (default: 'lib/processed' in the current directory)")
+                        help="The Output path argument (default: 'lib/target' in the current directory)")
     parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'raw_data\\amr-phenotype'),
                         help="The path argument input(.tsv) (default: 'raw_data\\amr-phenotype' in the current directory)")
     args = parser.parse_args()
