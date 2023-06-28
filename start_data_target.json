@@ -1,0 +1,13 @@
+{
+    "output": {
+      "value": 
+        "lib\\target",
+      "help": "The Output path argument (default: 'lib/target' in the current directory)"
+    },
+    "path": {
+      "value": 
+        "raw_data\\amr-phenotype",
+      "help": "The path argument input(.tsv) (default: 'raw_data\\amr-phenotype' in the current directory)"
+    }
+}
+  
