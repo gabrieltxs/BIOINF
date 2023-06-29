@@ -1,40 +1,43 @@
-index;ceftazidime;ciprofloxacin;meropenem;tobramycin;
 
-5;0.612;0.758;
+5;
+ceftazidime;0.643;0.622;
               precision    recall  f1-score   support
 
-           0       0.74      0.78      0.76        32
-           1       0.78      0.74      0.76        34
+           0       0.61      0.62      0.62        48
+           1       0.63      0.62      0.63        50
 
-    accuracy                           0.76        66
-   macro avg       0.76      0.76      0.76        66
-weighted avg       0.76      0.76      0.76        66
-0.664;0.769;
+    accuracy                           0.62        98
+   macro avg       0.62      0.62      0.62        98
+weighted avg       0.62      0.62      0.62        98
+
+ciprofloxacin;0.673;0.743;
               precision    recall  f1-score   support
 
-           0       0.77      0.85      0.80        39
-           1       0.78      0.68      0.72        31
+           0       0.77      0.78      0.77        59
+           1       0.71      0.70      0.70        46
 
-    accuracy                           0.77        70
-   macro avg       0.77      0.76      0.76        70
-weighted avg       0.77      0.77      0.77        70
-0.488;0.751;
+    accuracy                           0.74       105
+   macro avg       0.74      0.74      0.74       105
+weighted avg       0.74      0.74      0.74       105
+
+meropenem;0.538;0.622;
               precision    recall  f1-score   support
 
-           0       0.78      0.91      0.84        47
-           1       0.71      0.45      0.56        22
+           0       0.71      0.80      0.75        71
+           1       0.39      0.28      0.33        32
 
-    accuracy                           0.77        69
-   macro avg       0.75      0.68      0.70        69
-weighted avg       0.76      0.77      0.75        69
-0.857;0.824;
+    accuracy                           0.64       103
+   macro avg       0.55      0.54      0.54       103
+weighted avg       0.61      0.64      0.62       103
+
+tobramycin;0.818;0.874;
               precision    recall  f1-score   support
 
-           0       0.71      0.77      0.74        26
-           1       0.88      0.85      0.87        53
+           0       0.79      0.85      0.81        39
+           1       0.92      0.89      0.90        79
 
-    accuracy                           0.82        79
-   macro avg       0.80      0.81      0.80        79
-weighted avg       0.83      0.82      0.82        79
+    accuracy                           0.87       118
+   macro avg       0.85      0.87      0.86       118
+weighted avg       0.88      0.87      0.87       118
 
 

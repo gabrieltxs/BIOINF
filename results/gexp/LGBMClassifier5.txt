@@ -20,7 +20,7 @@ ciprofloxacin;0.767;0.743;
    macro avg       0.74      0.74      0.74       105
 weighted avg       0.74      0.74      0.74       105
 
-meropenem;0.587;0.595;
+meropenem;0.591;0.595;
               precision    recall  f1-score   support
 
            0       0.71      0.69      0.70        71

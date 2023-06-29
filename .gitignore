@@ -5,7 +5,7 @@
 # BIOINF
 raw_data/
 scaffold/
-
+*.joblib
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
