@@ -13,7 +13,7 @@
     },
     "pathf": {
       "value": 
-        "lib//target"
+        "lib/target"
       ,
       "help": "The path features argument (default: 'lib/target' in the current directory)"
     },
