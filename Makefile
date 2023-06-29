@@ -22,3 +22,6 @@ gexp:
 
 target:
 	python script_target.py -j start_data_target.json
+
+models:
+	python script_models.py -j start_data_models.json

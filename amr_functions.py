@@ -1052,8 +1052,7 @@ def process_model_results(output_results_path,
                           model, 
                           kmer, 
                           antibiotic_dfs, 
-                          input_kmer_path, 
-                          header,
+                          input_kmer_path,
                           entry):
     """
     Process model results and store them in a metadata file.
@@ -1073,22 +1072,11 @@ def process_model_results(output_results_path,
     - None
     """
     # Open the metadata file for the current model and delta values to store the results
-    with open(os.path.join(output_results_path, folder, type(model).__name__ + str(kmer) + '.txt'), 'a+') as f:
-        try:
-            # Checks if the metadata file already exists
-            with open(os.path.join(output_results_path, folder, type(model).__name__ + str(kmer) + '.txt'), 'r') as f2:
-                # Reads the first line of the metadata file
-                primeiralinha = f2.readline()
-            # Checks if the first line of the metadata file is the expected header, if not, writes it
-            if primeiralinha != header:
-                f.write(header)
-        except:
-            # Writes the header in case the metadata file does not exist
-            f.write(header)
-
+    with open(os.path.join(output_results_path, folder, type(model).__name__ + str(kmer) + '.txt'), 'w') as f:
         f.write(f'\n{kmer};')
 
         for antibiotic in tqdm(antibiotic_dfs):
+            f.write(f'\n{antibiotic};')
             if entry == 'kmer':
                 xis = pd.read_csv(os.path.join(input_kmer_path,'kmer', folder, 'kmer' + str(kmer) + '.csv'), sep=';', header=0)
             elif entry == 'gexp':
@@ -1171,3 +1159,23 @@ def process_model_results(output_results_path,
             f.write(classification_report(y_test, y_pred))
 
         f.write('\n\n')
+
+
+def extract_antibiotic_names(folder_path):
+    """
+    Extracts antibiotic names from files in the given folder.
+
+    Args:
+        folder_path (str): Path to the folder containing the files.
+
+    Returns:
+        list: List of antibiotic names.
+    """
+    antibiotic_names = []  # Initialize an empty list to store antibiotic names
+
+    for file_name in os.listdir(folder_path):  # Iterate over files in the folder
+        if file_name.endswith("_AMR.csv"):  # Check if the file name ends with "_AMR.csv"
+            antibiotic_name = file_name.replace("_AMR.csv", "")  # Remove "_AMR.csv" from the file name
+            antibiotic_names.append(antibiotic_name)  # Append the antibiotic name to the list
+
+    return antibiotic_names  # Return the list of antibiotic names
