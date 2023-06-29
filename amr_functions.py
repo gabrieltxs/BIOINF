@@ -1172,7 +1172,7 @@ def extract_antibiotic_names(folder_path):
         list: List of antibiotic names.
     """
     antibiotic_names = []  # Initialize an empty list to store antibiotic names
-
+    folder_path = os.path.join(os.getcwd(),folder_path)
     for file_name in os.listdir(folder_path):  # Iterate over files in the folder
         if file_name.endswith("_AMR.csv"):  # Check if the file name ends with "_AMR.csv"
             antibiotic_name = file_name.replace("_AMR.csv", "")  # Remove "_AMR.csv" from the file name
