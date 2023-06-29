@@ -6,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm 
 import seaborn as sns
 import multiprocessing
-
+import re
 
 from sklearn.preprocessing import MinMaxScaler
 
@@ -14,6 +14,10 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import f1_score
 from sklearn.utils import resample
 from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import f1_score, classification_report
+from sklearn import model_selection
+from bayes_opt import BayesianOptimization
+from numpy import mean
 
 # Import libraries for Bayesian optimization
 import warnings
@@ -22,6 +26,7 @@ warnings.filterwarnings('ignore')
 # Import classifier models
 from lightgbm import LGBMClassifier
 import lightgbm as lgb
+
 
 # Import visualization libraries
 import matplotlib.pyplot as plt
@@ -707,6 +712,40 @@ def compare_and_add(df1, df2):
 
     return df3
 
+def clean_and_rename(names):
+    """
+    Cleans a list of names by removing special characters and renames any duplicate names
+    by appending a numerical suffix.
+
+    Args:
+        names (list): A list of names to be cleaned and renamed.
+
+    Returns:
+        list: A list of cleaned and renamed names.
+    """
+    cleaned_names = []
+
+    # Clean names by removing special characters
+    for name in names:
+        cleaned_name = re.sub('[^A-Za-z0-9_]+', '', name)
+        cleaned_names.append(cleaned_name)
+
+    renamed_names = []
+    name_count = {}
+
+    # Rename duplicate names by appending a numerical suffix
+    for name in cleaned_names:
+        if name in name_count:
+            name_count[name] += 1
+            new_name = name + 'x' + str(name_count[name])
+        else:
+            name_count[name] = 0
+            new_name = name
+
+        renamed_names.append(new_name)
+
+    return renamed_names
+
 def process_specialty_genes_data(filename, list_genomes_path):
     """
     Process SpecialtyGenes-WGS data.
@@ -821,10 +860,11 @@ def process_specialty_genes_data(filename, list_genomes_path):
 
     
     df_return = []
-
+    unique_genes = clean_and_rename(unique_genes)
     for propertie in properties:
         # Create a DataFrame from the list of data
         tmp_df = specialtygenes_df[specialtygenes_df['Property'] == propertie]
+
         df = pd.DataFrame(index=file_list, columns=unique_genes)
         # Iterate over each row
         for index in tqdm(df.index):
@@ -847,7 +887,7 @@ def process_specialty_genes_data(filename, list_genomes_path):
     merged_kmer = compare_and_add(df_return[0], df_return[1])
     merged_kmer = compare_and_add(merged_kmer, df_return[2])
 
-    merged_kmer.to_csv(os.path.join(df_input_ml, "gexp.csv"))
+    merged_kmer.to_csv(os.path.join(df_input_ml, "gexp.csv"), sep=';')
 
     # Return the resulting dataframe
     return df_return
@@ -988,3 +1028,154 @@ def read_ascii_art(file_path):
             ascii_art_dict[title.strip()] = art
 
     return ascii_art_dict
+
+def get_folders(directory):
+    """
+    Retrieves a list of folders within the given directory.
+
+    Args:
+        directory (str): The path to the directory.
+
+    Returns:
+        list: A list of folder names within the directory.
+    """
+    folders = []  # Initialize an empty list to store folder names
+    for item in os.listdir(directory):  # Iterate over items in the directory
+        item_path = os.path.join(directory, item)  # Create the full path of the item
+        if os.path.isdir(item_path):  # Check if the item is a directory
+            folders.append(item)  # Add the folder name to the list
+    return folders  # Return the list of folder names
+
+
+def process_model_results(output_results_path, 
+                          folder, 
+                          model, 
+                          kmer, 
+                          antibiotic_dfs, 
+                          input_kmer_path,
+                          entry):
+    """
+    Process model results and store them in a metadata file.
+
+    Args:
+    - output_results_path (str): Path to the output results directory.
+    - folder (str): Folder name.
+    - model: The model object.
+    - kmer: k_mer value.
+    - antibiotic_dfs: Dictionary of antibiotic dataframes.
+    - input_kmer_path (str): Path to the input kmer directory.
+    - header (str): The header for the metadata file.
+    - entry (str): The type of entry of the model.
+
+
+    Outputs:
+    - None
+    """
+    # Open the metadata file for the current model and delta values to store the results
+    with open(os.path.join(output_results_path, folder, type(model).__name__ + str(kmer) + '.txt'), 'w') as f:
+        f.write(f'\n{kmer};')
+
+        for antibiotic in tqdm(antibiotic_dfs):
+            f.write(f'\n{antibiotic};')
+            if entry == 'kmer':
+                xis = pd.read_csv(os.path.join(input_kmer_path,'kmer', folder, 'kmer' + str(kmer) + '.csv'), sep=';', header=0)
+            elif entry == 'gexp':
+                xis = pd.read_csv(os.path.join(input_kmer_path,'gexp', 'gexp.csv'), sep=';', header=0)
+            
+
+            # Sets the index of the DataFrame to the first column and drops it
+            xis.set_index('Unnamed: 0', inplace=True, drop=True)
+            
+            
+            xis.fillna(0, inplace=True)
+
+            filtered_xis = filter_antibiotic_dfs(xis, antibiotic, antibiotic_dfs)
+
+            antibiotic_dfs[antibiotic].fillna(0, inplace=True)
+            yps = antibiotic_dfs[antibiotic][antibiotic]
+
+            # Split the data into training and testing sets
+            X_train, X_test, y_train, y_test = model_selection.train_test_split(filtered_xis, yps, test_size=0.3,
+                                                                                random_state=0,
+                                                                                stratify=antibiotic_dfs[antibiotic][
+                                                                                    antibiotic])
+            X_train = X_train.reset_index(drop=True)
+            y_train = y_train.reset_index(drop=True)
+
+            full_df_08 = pd.concat([X_train, y_train], axis=1)
+            plot_classes(full_df_08, antibiotic, output_results_path)
+
+            def lgbm_cv(n_estimators, learning_rate, max_depth, num_leaves, min_child_samples):
+                """
+                Run cross-validation on a training dataset using a LightGBM classifier with hyperparameters specified by the input.
+
+                Args:
+                - n_estimators (float): The number of boosting iterations.
+                - learning_rate (float): The learning rate used in the boosting process.
+                - max_depth (float): The maximum depth of each decision tree in the ensemble.
+                - num_leaves (float): The maximum number of leaves in each decision tree.
+                - min_child_samples (float): The minimum number of samples required to be at a leaf node.
+
+                Returns:
+                - (float): The mean of macro F1 score for one fold of cross-validation using the specified hyperparameters.
+                """
+                # Define hyperparameters as a dictionary
+                params = {
+                    'n_estimators': int(round(n_estimators)),
+                    'learning_rate': learning_rate,
+                    'max_depth': int(round(max_depth)),
+                    'num_leaves': int(round(num_leaves)),
+                    'min_child_samples': int(round(min_child_samples))
+                }
+
+                # Return mean score from cross-validation
+                return np.mean(run_cv(X_train, y_train, params))
+
+            pbounds = {
+                'n_estimators': (400, 800),
+                'learning_rate': (0.01, 0.1),
+                'max_depth': (3, 9),
+                'num_leaves': (5, 50),
+                'min_child_samples': (10, 100)
+            }
+
+            # Run Bayesian optimization
+            optimizer = BayesianOptimization(f=lgbm_cv, pbounds=pbounds, random_state=42)
+            optimizer.maximize(init_points=10, n_iter=2)
+
+            # Print best hyperparameters
+            print(optimizer.max)
+            f.write('%.3f;' % mean(optimizer.max['target']))
+
+            space = get_space_from_optimizer(optimizer)
+
+            model = LGBMClassifier(**space, random_state=42)
+            model.fit(X_train, y_train)
+
+            y_pred = model.predict(X_test)
+            score = f1_score(y_test, y_pred, average='weighted')
+            print('F1-Teste: ' + str(score))
+            f.write('%.3f;\n' % mean(score))
+            f.write(classification_report(y_test, y_pred))
+
+        f.write('\n\n')
+
+
+def extract_antibiotic_names(folder_path):
+    """
+    Extracts antibiotic names from files in the given folder.
+
+    Args:
+        folder_path (str): Path to the folder containing the files.
+
+    Returns:
+        list: List of antibiotic names.
+    """
+    antibiotic_names = []  # Initialize an empty list to store antibiotic names
+
+    for file_name in os.listdir(folder_path):  # Iterate over files in the folder
+        if file_name.endswith("_AMR.csv"):  # Check if the file name ends with "_AMR.csv"
+            antibiotic_name = file_name.replace("_AMR.csv", "")  # Remove "_AMR.csv" from the file name
+            antibiotic_names.append(antibiotic_name)  # Append the antibiotic name to the list
+
+    return antibiotic_names  # Return the list of antibiotic names

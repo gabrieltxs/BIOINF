@@ -1,0 +1,40 @@
+index;ceftazidime;ciprofloxacin;meropenem;tobramycin;
+
+5;0.568;0.651;
+              precision    recall  f1-score   support
+
+           0       0.65      0.62      0.63        32
+           1       0.66      0.68      0.67        34
+
+    accuracy                           0.65        66
+   macro avg       0.65      0.65      0.65        66
+weighted avg       0.65      0.65      0.65        66
+0.709;0.631;
+              precision    recall  f1-score   support
+
+           0       0.65      0.79      0.71        39
+           1       0.64      0.45      0.53        31
+
+    accuracy                           0.64        70
+   macro avg       0.64      0.62      0.62        70
+weighted avg       0.64      0.64      0.63        70
+0.495;0.672;
+              precision    recall  f1-score   support
+
+           0       0.75      0.81      0.78        47
+           1       0.50      0.41      0.45        22
+
+    accuracy                           0.68        69
+   macro avg       0.62      0.61      0.61        69
+weighted avg       0.67      0.68      0.67        69
+0.782;0.860;
+              precision    recall  f1-score   support
+
+           0       0.80      0.77      0.78        26
+           1       0.89      0.91      0.90        53
+
+    accuracy                           0.86        79
+   macro avg       0.84      0.84      0.84        79
+weighted avg       0.86      0.86      0.86        79
+
+
