@@ -1047,6 +1047,8 @@ def get_folders(directory):
     return folders  # Return the list of folder names
 
 
+import joblib
+
 def process_model_results(output_results_path, 
                           folder, 
                           model, 
@@ -1067,7 +1069,6 @@ def process_model_results(output_results_path,
     - header (str): The header for the metadata file.
     - entry (str): The type of entry of the model.
 
-
     Outputs:
     - None
     """
@@ -1082,10 +1083,8 @@ def process_model_results(output_results_path,
             elif entry == 'gexp':
                 xis = pd.read_csv(os.path.join(input_kmer_path,'gexp', 'gexp.csv'), sep=';', header=0)
             
-
             # Sets the index of the DataFrame to the first column and drops it
             xis.set_index('Unnamed: 0', inplace=True, drop=True)
-            
             
             xis.fillna(0, inplace=True)
 
@@ -1125,7 +1124,10 @@ def process_model_results(output_results_path,
                     'learning_rate': learning_rate,
                     'max_depth': int(round(max_depth)),
                     'num_leaves': int(round(num_leaves)),
-                    'min_child_samples': int(round(min_child_samples))
+                    'min_child_samples': int(round(min_child_samples)),
+                    'device': 'gpu',
+                    'gpu_platform_id': 0,
+                    'gpu_device_id': 0
                 }
 
                 # Return mean score from cross-validation
@@ -1149,8 +1151,12 @@ def process_model_results(output_results_path,
 
             space = get_space_from_optimizer(optimizer)
 
-            model = LGBMClassifier(**space, random_state=42)
+            model = LGBMClassifier(**space, random_state=42, device='gpu', gpu_platform_id=0, gpu_device_id=0)
             model.fit(X_train, y_train)
+
+            # Save the trained model
+            model_path = os.path.join(output_results_path, folder, f"{type(model).__name__}_{kmer}_{antibiotic}.joblib")
+            joblib.dump(model, model_path)
 
             y_pred = model.predict(X_test)
             score = f1_score(y_test, y_pred, average='weighted')
@@ -1159,6 +1165,7 @@ def process_model_results(output_results_path,
             f.write(classification_report(y_test, y_pred))
 
         f.write('\n\n')
+
 
 
 def extract_antibiotic_names(folder_path):
