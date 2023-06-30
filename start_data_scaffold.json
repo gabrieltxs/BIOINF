@@ -1,19 +1,18 @@
 {
-    "path": {
-      "value": [
-        "raw_data\\ngs-specialtygenes",
-        "raw_data\\ngs-wgs"     
-      ],
-      "help": "The path argument (default: 'scaffold' in the current directory)"
-    },
-    "output": {
-      "value": "scaffold",
-      "help": "The output path argument (default: 'lib_files/kmer' in the current directory)"
-    },
-    "func": {
-      "value": ["gene-scaffold",
-                "wgs-scaffold"],
-      "help": "The function argument (default: main-scaffold) (Op.: kmer_mult, kmer_sync, main-scaffold, gene-scaffold)"
-    }  
+  "path": {
+    "value": [
+      "raw_data\\ngs-specialtygenes",
+      "raw_data\\ngs-wgs"     
+    ],
+    "help": "The path argument (default: 'scaffold' in the current directory)"
+  },
+  "output": {
+    "value": "scaffold",
+    "help": "The output path argument (default: 'lib_files/kmer' in the current directory)"
+  },
+  "func": {
+    "value": ["gene-scaffold",
+              "wgs-scaffold"],
+    "help": "The function argument (default: main-scaffold) (Op.: kmer_mult, kmer_sync, main-scaffold, gene-scaffold)"
+  }  
 }
-  
