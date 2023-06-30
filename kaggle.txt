@@ -1,0 +1,53 @@
+'''''''''''''''!rm -r /opt/conda/lib/python3.6/site-packages/lightgbm
+!git clone --recursive https://github.com/Microsoft/LightGBM
+'''''''''''''''
+!apt-get install -y -qq libboost-all-dev
+
+%%bash
+cd LightGBM
+rm -r build
+mkdir build
+cd build
+cmake -DUSE_GPU=1 -DOpenCL_LIBRARY=/usr/local/cuda/lib64/libOpenCL.so -DOpenCL_INCLUDE_DIR=/usr/local/cuda/include/ ..
+make -j$(nproc)
+
+!cd LightGBM/python-package/;python3 setup.py install --precompile
+
+!mkdir -p /etc/OpenCL/vendors && echo "libnvidia-opencl.so.1" > /etc/OpenCL/vendors/nvidia.icd
+!rm -r LightGBM
+
+!nvidia-smi
+
+In order to leverage the GPU, we need to set the following parameters:
+
+    'device': 'gpu',
+    'gpu_platform_id': 0,
+    'gpu_device_id': 0
+
+
+
+!git clone https://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@github.com/gabrieltxs/BIOINF.git
+
+# Clear output folder
+import os
+
+def remove_folder_contents(folder):
+    for the_file in os.listdir(folder):
+        file_path = os.path.join(folder, the_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                remove_folder_contents(file_path)
+                os.rmdir(file_path)
+        except Exception as e:
+            print(e)
+
+folder_path = '/kaggle/working//BIOINF'
+remove_folder_contents(folder_path)
+os.rmdir(folder_path)
+
+
+%%bash
+cd BIOINF
+make modelsunix

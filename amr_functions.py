@@ -7,8 +7,9 @@ from tqdm import tqdm
 import seaborn as sns
 import multiprocessing
 import re
-
+from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
+from collections import defaultdict
 
 # Import libraries for machine learning
 from sklearn.metrics import f1_score
@@ -18,6 +19,8 @@ from sklearn.metrics import f1_score, classification_report
 from sklearn import model_selection
 from bayes_opt import BayesianOptimization
 from numpy import mean
+
+import joblib
 
 # Import libraries for Bayesian optimization
 import warnings
@@ -332,7 +335,7 @@ def scaffold_gene(fasta_folder: str, output_path: str) -> None:
                             out.write(current_sequence)
 
                     # Reset the current sequence
-                    current_sequence = '\n' + line + '\n'
+                    current_sequence = '\n'
                 else:
                     # Append to the current sequence
                     current_sequence += line
@@ -446,7 +449,7 @@ def generate_kmers(seq, k):
     Returns:
         dict: Dictionary containing k-mers as keys and their frequencies as values.
     """
-    k_freq = {}  # Initialize an empty dictionary to store k-mer frequencies
+    k_freq = defaultdict(int)  # Initialize an empty dictionary to store k-mer frequencies
     
     for i in range(0, len(seq) - k + 1):  # Iterate through the indices of the sequence to generate k-mers
         kmer = seq[i:i + k]  # Extract the current k-mer from the sequence
@@ -529,61 +532,55 @@ def kmer_of_files_modular_genes(file_list, dataframe, k):
         file_list (list): List of file paths to be processed.
         dataframe (pandas.DataFrame): Existing dataframe to be updated.
         k (int): k value of the chosen k-mer
-        wgs (bool): boolean value to specify if it is wgs or not
 
     Returns:
         pandas.DataFrame: Updated dataframe with k-mer frequencies.
     """
+    keys = dataframe.keys()
+    kmer_existed = []
     file_names = []  # Initialize an empty list to store file names
-    
-    for file in tqdm(file_list, desc='Strain reading '):  # Iterate through the files in the file list
 
-        kmer_freq = {}
-        # Open the current file
-        target_file = open(file)  
-        # Select the string of the name of the file
-        file_name = file.split('\\')[len(file.split('\\'))-1] 
-        # Add the current file name to the list
-        file_names.append(file_name)  
-        
-        for line in target_file.readlines():  # Iterate through each line in the current file
+    for file in tqdm(file_list, desc='Strain reading ', colour='green'):
+        file_name = os.path.basename(file)
+        file_names.append(file_name)
 
-            line = line.strip()  # Remove leading and trailing whitespaces from the line
+        # Create a new row in the pandas DataFrame to store the k-mer frequencies of the current file
+        df_row = pd.DataFrame(index=file_names)
 
-            if line.startswith('>') or line.startswith('\n'):  # If the line starts with '>' or is empty
-                pass  # Skip the line and continue to the next iteration
 
-            else: # else execute k-mer analysis and 
-                # Remove whitespaces within the line and concatenate the characters
-                seq = "".join(line.split())   
-                # Generate k-mer frequencies for the sequence using a defined function
-                kmer_freq_new = generate_kmers(seq, k) 
-                # Merge dictionaries together
-                kmer_freq = merge_dicts(kmer_freq_new, kmer_freq) 
-                # Sort the k-mer frequencies dictionary by keys
-                kmer_freq = dict(sorted(kmer_freq.items()))  
-                # Get the column keys of the full dataframe
-                keys = dataframe.keys()  
-                # Initialize an empty list to store existing k-mers
-                kmer_existed = []  
-                # Adds missing k-mers to the list of existing k-mers.
-                kmer_existed = add_missing_kmers(kmer_freq=kmer_freq,
-                                                keys=keys,
-                                                kmer_existed=kmer_existed)
-                # Create a new dataframe with columns for existing k-mers
-                df = pd.DataFrame(columns=kmer_existed)  
-                # Concatenate the new dataframe with the full dataframe
-                dataframe = pd.concat([dataframe, df], axis=1)  
+        unified_dict = defaultdict(int)
+        with open(file, 'r') as file_open:
+            lines = file_open.readlines()
 
-        # Updates the corresponding cells in the dataframe with the k-mer frequencies.
-        dataframe = update_dataframe_with_kmer_freq(dataframe=dataframe,
-                                                    file_name=file_name,
-                                                    kmer_freq=kmer_freq)
+        for line in lines:
 
-        target_file.close()  # Close the current file
-        file_names.pop()  # Remove the current file name from the list
+            current_dict = generate_kmers(line.replace("\n", ""), k)
 
-    return dataframe  # Return the updated full dataframe
+            for kmer, count in current_dict.items():
+                unified_dict[kmer] += count
+
+        # Check if the current k-mer is already present in the pandas DataFrame
+        existing_keys = dataframe.keys()
+        existing_keys_set = set(existing_keys)
+        new_kmers = [ke for ke in unified_dict.keys() if ke not in existing_keys_set]
+
+        # Add a new column for the current k-mer in the pandas DataFrame
+        df = pd.DataFrame(columns=new_kmers)
+        dataframe = pd.concat([dataframe, df], axis=1)
+        dataframe = pd.concat([dataframe, df_row], axis=0)
+
+        # Add the k-mer frequencies of the current file to the pandas DataFrame
+        for j in unified_dict.keys():
+            dataframe.at[file_name, j] = int(unified_dict[j])
+        ################################################################
+
+        # Increment the counter variable and remove the name of the current file from the list of file names
+        file_names.pop()
+        # Sort columns by column names using numpy
+    sorted_columns = dataframe.columns[np.argsort(dataframe.columns)]
+    dataframe = dataframe[sorted_columns]
+
+    return dataframe
 
 def kmer_of_files_modular_wgs(file_list, dataframe, k):
     """
@@ -904,22 +901,26 @@ def patch_dataframe(results, main_df, main_columns):
     Returns:
         pd.DataFrame: The updated main DataFrame.
     """
-    for df in tqdm(results, desc='Patching dataframes together'):
-        # Get the missing columns in main_df
-        missing_columns = [col for col in df.columns if col not in main_columns]
-        
-        # Add the missing columns to main_df with None as the default value
-        main_df = main_df.reindex(columns=main_df.columns.union(missing_columns), fill_value=None)
-        
-        for line in df.index.tolist():
-            for j in df.keys():
-                # Iterate over k-mers in the current file
-                value = df.loc[line, j]
-                if not np.isnan(value):
-                    # Assign the k-mer frequency to the corresponding cell in the DataFrame
-                    main_df.at[line, j] = int(value)
     
-    return main_df
+    # Iterate over the list of DataFrames
+    new_df = pd.DataFrame()
+    for i in tqdm(range(0, len(results)), desc="Patching dataframes together", colour="yellow"):
+        if i < len(results):  # Ensure that there are at least two DataFrames remaining
+            new_df = pd.concat([new_df, results[i]], axis=1)  # Concatenate two DataFrames 
+            # Add up the values of identical columns
+            new_df = new_df.groupby(by=new_df.columns, axis=1).sum()
+
+
+    # Concatenate the DataFrames horizontally
+    #new_df = pd.concat(results, axis=1)
+
+    # Add up the values of identical columns
+    #new_df = new_df.groupby(by=new_df.columns, axis=1).sum()
+                
+
+
+    
+    return new_df
 
 def scaffold_wgs(file_path, output):
     """
@@ -999,7 +1000,7 @@ def generate_kmer_frequencies_mult(k_mer, path, output, folder, threads, functio
     ultron_df = patch_dataframe(results, ultron_df, ultron_columns)
 
     # Save ultron_df to a CSV file
-    ultron_df.to_csv(os.path.join(output_for_file, 'kmer' + str(k_mer) + '.csv'), index=True, sep=';')
+    ultron_df.to_parquet(os.path.join(output_for_file, 'kmer' + str(k_mer) + '.parquet'), index=True)
 
 def read_ascii_art(file_path):
     """
@@ -1047,7 +1048,6 @@ def get_folders(directory):
     return folders  # Return the list of folder names
 
 
-import joblib
 
 def process_model_results(output_results_path, 
                           folder, 
