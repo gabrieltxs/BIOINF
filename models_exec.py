@@ -29,7 +29,7 @@ def main():
                         help="The path features argument (default: 'lib/target' in the current directory)")
     parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'results'),
                         help="The output results path argument (default: 'results' in the current directory)")
-    parser.add_argument("-e", "--entry", default='kmer',
+    parser.add_argument("-e", "--entry", default='gexp',
                         help="The argument that defines the type of entry of the ml model (default = 'kmer')")
     
     args = parser.parse_args()

@@ -1082,8 +1082,9 @@ def process_model_results(output_results_path,
                 xis = pd.read_parquet(os.path.join(input_kmer_path,'kmer', folder, 'kmer' + str(kmer) + '.parquet'))
             elif entry == 'gexp':
                 xis = pd.read_csv(os.path.join(input_kmer_path,'gexp', 'gexp.csv'), sep=';', header=0)
-            
-            
+                # Sets the index of the DataFrame to the first column and drops it
+                xis.set_index('Unnamed: 0', inplace=True, drop=True)          
+
             xis.fillna(0, inplace=True)
 
             filtered_xis = filter_antibiotic_dfs(xis, antibiotic, antibiotic_dfs)
