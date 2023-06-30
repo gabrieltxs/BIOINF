@@ -1,24 +1,24 @@
 
 5;
-ceftazidime;0.643;0.622;
+ceftazidime;0.628;0.582;
               precision    recall  f1-score   support
 
-           0       0.61      0.62      0.62        48
-           1       0.63      0.62      0.63        50
+           0       0.57      0.56      0.57        48
+           1       0.59      0.60      0.59        50
 
-    accuracy                           0.62        98
-   macro avg       0.62      0.62      0.62        98
-weighted avg       0.62      0.62      0.62        98
+    accuracy                           0.58        98
+   macro avg       0.58      0.58      0.58        98
+weighted avg       0.58      0.58      0.58        98
 
-ciprofloxacin;0.673;0.743;
+ciprofloxacin;0.678;0.723;
               precision    recall  f1-score   support
 
-           0       0.77      0.78      0.77        59
-           1       0.71      0.70      0.70        46
+           0       0.74      0.78      0.76        59
+           1       0.70      0.65      0.67        46
 
-    accuracy                           0.74       105
-   macro avg       0.74      0.74      0.74       105
-weighted avg       0.74      0.74      0.74       105
+    accuracy                           0.72       105
+   macro avg       0.72      0.72      0.72       105
+weighted avg       0.72      0.72      0.72       105
 
 meropenem;0.538;0.622;
               precision    recall  f1-score   support
@@ -30,14 +30,14 @@ meropenem;0.538;0.622;
    macro avg       0.55      0.54      0.54       103
 weighted avg       0.61      0.64      0.62       103
 
-tobramycin;0.818;0.874;
+tobramycin;0.825;0.865;
               precision    recall  f1-score   support
 
-           0       0.79      0.85      0.81        39
-           1       0.92      0.89      0.90        79
+           0       0.78      0.82      0.80        39
+           1       0.91      0.89      0.90        79
 
-    accuracy                           0.87       118
-   macro avg       0.85      0.87      0.86       118
-weighted avg       0.88      0.87      0.87       118
+    accuracy                           0.86       118
+   macro avg       0.84      0.85      0.85       118
+weighted avg       0.87      0.86      0.87       118
 
 
