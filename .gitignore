@@ -6,6 +6,8 @@
 raw_data/
 scaffold/
 *.joblib
+*-b.txt
+lib/kmer/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

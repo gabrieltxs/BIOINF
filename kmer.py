@@ -24,13 +24,13 @@ def str2bool(v):
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=5,
                     help="The k_mer argument (an integer from 2 to 11, default: 5)")
-parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold\\virulence_factor'),
+parser.add_argument("-p", "--path", default=os.path.join(os.getcwd(), 'scaffold\\transporter'),
                     help="The path argument (default: 'scaffold-folder' in the current directory)")
 parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'lib\\kmer'),
                     help="The output path argument (default: 'lib_files\\kmer' in the current directory)")
 parser.add_argument("-f", "--func",  default='kmer_mult_gene',
                         help="The function argument (default: main) (Op.: kmer_mult, kmer_sync)")
-parser.add_argument("-fn", "--foldername",  default='vf',
+parser.add_argument("-fn", "--foldername",  default='tpt',
                         help="The Name of the folder to be created to store the output (for ngs-specialtygenes) (default: amr)")
 parser.add_argument("-c", "--cores", type=int,  default='16',
                         help="The number of cores used (default: 4)")

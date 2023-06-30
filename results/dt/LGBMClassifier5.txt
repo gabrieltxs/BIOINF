@@ -10,17 +10,17 @@ ceftazidime;0.641;0.704;
    macro avg       0.71      0.71      0.70        98
 weighted avg       0.71      0.70      0.70        98
 
-ciprofloxacin;0.627;0.696;
+ciprofloxacin;0.627;0.695;
               precision    recall  f1-score   support
 
-           0       0.74      0.71      0.72        59
-           1       0.65      0.67      0.66        46
+           0       0.73      0.73      0.73        59
+           1       0.65      0.65      0.65        46
 
     accuracy                           0.70       105
    macro avg       0.69      0.69      0.69       105
 weighted avg       0.70      0.70      0.70       105
 
-meropenem;0.557;0.715;
+meropenem;0.545;0.715;
               precision    recall  f1-score   support
 
            0       0.76      0.90      0.83        71
