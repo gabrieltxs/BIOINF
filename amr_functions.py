@@ -1044,7 +1044,8 @@ def get_folders(directory):
     for item in os.listdir(directory):  # Iterate over items in the directory
         item_path = os.path.join(directory, item)  # Create the full path of the item
         if os.path.isdir(item_path):  # Check if the item is a directory
-            folders.append(item)  # Add the folder name to the list
+            if item != '.git':
+                folders.append(item)  # Add the folder name to the list
     return folders  # Return the list of folder names
 
 
@@ -1090,7 +1091,12 @@ def process_model_results(output_results_path,
             filtered_xis = filter_antibiotic_dfs(xis, antibiotic, antibiotic_dfs)
 
             antibiotic_dfs[antibiotic].fillna(0, inplace=True)
-            yps = antibiotic_dfs[antibiotic][antibiotic]
+
+            column_with_values = antibiotic
+            current_antibiotic = antibiotic
+
+            #load target values
+            yps = antibiotic_dfs[current_antibiotic][column_with_values]
 
             # Split the data into training and testing sets
             X_train, X_test, y_train, y_test = model_selection.train_test_split(filtered_xis, yps, test_size=0.3,

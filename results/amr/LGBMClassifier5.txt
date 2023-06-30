@@ -1,3 +1,0 @@
-
-5;
-ceftazidime;0.713;

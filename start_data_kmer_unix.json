@@ -1,0 +1,35 @@
+{
+  "k_mer": {
+    "type": "int",
+    "choices": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "value": 9,
+    "help": "The k_mer argument (an integer from 2 to 11, default: 5)"
+  },
+  "path": {
+    "value": [
+      "scaffold//antibiotic_resistance",
+      "scaffold//drug_target",
+      "scaffold//transporter",
+      "scaffold//virulence_factor",
+      "scaffold//wgs"
+    ],
+    "help": "The path argument (default: 'scaffold' in the current directory)"
+  },
+  "output": {
+    "value": "lib\\kmer",
+    "help": "The output path argument (default: 'lib_files/kmer' in the current directory)"
+  },
+  "func": {
+    "value": ["kmer_mult_gene","kmer_mult_wgs"],
+    "help": "The function argument (default: main-scaffold) (Op.: kmer_mult_gene,kmer_mult_wgs, kmer_sync_gene, kmer_sync_wgs,)"
+  },
+  "foldername": {
+    "value": ["amr", "dt", "tpt", "vf", "wgs"],
+    "help": "The Name of the folder to be created to store the output (for ngs-specialtygenes) (default: amr)"
+  },
+  "cores": {
+    "type": "int",
+    "value": "16",
+    "help": "The number of cores used (default: 4)"
+  }
+}
