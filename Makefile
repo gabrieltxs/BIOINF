@@ -25,8 +25,22 @@ gexp:
 target:
 	python script_target.py -j start_data_target.json
 
-modelswin:
+models:
 	python script_models.py -j start_data_models.json
+
+
+scaffoldunix:
+	python script_scaffold.py -j start_data_models_unix.json
+
+kmerunix:
+	python script_kmer.py -j start_data_models_unix.json
+
+gexpunix:
+	python script_gexp.py -j start_data_models_unix.json
+
+targetunix:
+	python script_target.py -j start_data_target_unix.json
 
 modelsunix:
 	python script_models.py -j start_data_models_unix.json
+

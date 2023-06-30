@@ -25,7 +25,7 @@
     },
     "entry": {
       "value": 
-        ["gexp", "kmer"]
+        ["kmer"]
       ,
       "help": "The argument that defines the type of entry of the ml model (default = 'kmer')"
     }
