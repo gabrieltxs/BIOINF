@@ -10,7 +10,7 @@ import re
 from collections import Counter
 from sklearn.preprocessing import MinMaxScaler
 from collections import defaultdict
-
+import time
 # Import libraries for machine learning
 from sklearn.metrics import f1_score
 from sklearn.utils import resample
@@ -204,7 +204,7 @@ def run_cv(X_train, y_train, params):
     """
    
     # define cross-validation splitter
-    skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=42)
+    skf = StratifiedKFold(n_splits=4, shuffle=True, random_state=42)
 
     # run cross-validation
     scores = []
@@ -214,13 +214,24 @@ def run_cv(X_train, y_train, params):
         train_X, val_X = X_train.loc[train_idx], X_train.loc[val_idx]
         train_y, val_y = y_train.loc[train_idx], y_train.loc[val_idx]
 
+        
+        # Start the timer
+        start_time = time.time()
+
         # initialize a LightGBM classifier with the provided hyperparameters, and fit it to the training data
-        model = lgb.LGBMClassifier(**params, random_state=42)
+        model = lgb.LGBMClassifier(**params, random_state=42, device='gpu', gpu_platform_id=0, gpu_device_id=0)
         model.fit(train_X, train_y, eval_set=[(val_X, val_y)], early_stopping_rounds=10, verbose=0)
+
+        # Stop the timer
+        end_time = time.time()
+        # Calculate the elapsed time
+        elapsed_time = end_time - start_time
+        # Print the result
+        print(f"Fitting time: {elapsed_time:.2} seconds")
 
         # make predictions on the validation set using the trained model, and compute the macro F1 score
         y_pred = model.predict(val_X)
-        score = f1_score(val_y, y_pred, average='macro')
+        score = f1_score(val_y, y_pred, average='weighted')
         scores.append(score)
 
     # return the list of scores
@@ -1078,6 +1089,8 @@ def process_model_results(output_results_path,
         f.write(f'\n{kmer};')
 
         for antibiotic in tqdm(antibiotic_dfs):
+            print(f"\n\n{folder}")
+            print(antibiotic)
             f.write(f'\n{antibiotic};')
             if entry == 'kmer':
                 xis = pd.read_parquet(os.path.join(input_kmer_path,'kmer', folder, 'kmer' + str(kmer) + '.parquet'))
@@ -1129,17 +1142,14 @@ def process_model_results(output_results_path,
                     'learning_rate': learning_rate,
                     'max_depth': int(round(max_depth)),
                     'num_leaves': int(round(num_leaves)),
-                    'min_child_samples': int(round(min_child_samples)),
-                    'device': 'gpu',
-                    'gpu_platform_id': 0,
-                    'gpu_device_id': 0
+                    'min_child_samples': int(round(min_child_samples))
                 }
 
                 # Return mean score from cross-validation
                 return np.mean(run_cv(X_train, y_train, params))
 
             pbounds = {
-                'n_estimators': (400, 800),
+                'n_estimators': (500, 700),
                 'learning_rate': (0.01, 0.1),
                 'max_depth': (3, 9),
                 'num_leaves': (5, 50),
@@ -1148,7 +1158,7 @@ def process_model_results(output_results_path,
 
             # Run Bayesian optimization
             optimizer = BayesianOptimization(f=lgbm_cv, pbounds=pbounds, random_state=42)
-            optimizer.maximize(init_points=10, n_iter=2)
+            optimizer.maximize(init_points=2, n_iter=2)
 
             # Print best hyperparameters
             print(optimizer.max)
@@ -1166,8 +1176,11 @@ def process_model_results(output_results_path,
             y_pred = model.predict(X_test)
             score = f1_score(y_test, y_pred, average='weighted')
             print('F1-Teste: ' + str(score))
+            
             f.write('%.3f;\n' % mean(score))
+            f.write(str(optimizer.max))
             f.write(classification_report(y_test, y_pred))
+            f.write('\n\n\n')
 
         f.write('\n\n')
 
