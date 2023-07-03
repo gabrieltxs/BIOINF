@@ -392,7 +392,39 @@ def add_df2_to_df1(df1, df2, output_path, k, multiplier = 1):
                 #print(f"The '{col}' column does not exist in df2.")
         
     # save the updated df1 dataframe to the specified output path
-    df1.to_csv(os.path.join(os.getcwd(),output_path+'\\kmer'+str(k)+'.csv'), index=True, sep=';')
+    df1.to_csv(os.path.join(os.getcwd(),output_path,'Aboost'+'.csv'), index=True, sep=';')
+    
+def times_df2_to_df1(df1, df2, output_path, multiplier = 1):
+    """
+    Adds the corresponding values from df2, multiplied by the specified multiplier, 
+    to each cell in df1 at row 'xyz' and every column in df1 that also exists in df2.
+    
+    Args:
+    df1: pandas dataframe, the dataframe to update
+    df2: pandas dataframe, the dataframe to use for adding values to df1
+    output_path: str, the path to save the updated df1 dataframe
+    k: int, value of the size of k
+    multiplier: int or float, the value to multiply each column in df2 by before adding it to df1
+    
+    Returns:
+    None
+    """
+    # iterate over all columns in df1
+    for row in tqdm(df2.index.tolist(), desc='Strains proccessed'):
+        for col in df2.columns:
+
+            # check if the specified column exists in both dataframes
+            if col in df1.columns:
+                # add every cell in df2 at row 'xyz', column 'col' to the equivalent cell in df1
+                df1.loc[row, col] = df1.loc[row, col] * df2.loc[row, col] * multiplier
+            #else:
+                #print(f"The '{col}' column does not exist in df2.")
+        
+    # save the updated df1 dataframe to the specified output path
+    #df1.to_parquet(os.path.join(os.getcwd(),output_path,'boost'+'.parquet'))
+    
+    df1.to_csv(os.path.join(os.getcwd(),output_path,'Tboost'+'.csv'), index=True, sep=';')
+    
 
 def count_files(directory):
     """
@@ -1085,6 +1117,7 @@ def process_model_results(output_results_path,
     - None
     """
     # Open the metadata file for the current model and delta values to store the results
+    create_folder(os.getcwd(),output_results_path)
     with open(os.path.join(output_results_path, folder, type(model).__name__ + str(kmer) + '.txt'), 'w') as f:
         f.write(f'\n{kmer};')
 
