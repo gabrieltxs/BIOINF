@@ -56,12 +56,11 @@ def main():
 
 
     if entry == 'kmer':
-        titles = {}
-        titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))
-        print(titles['models_exec_kmer'])
-
         for folder in tqdm(folders):
             amr.create_folder(output_results_path, folder)
+            titles = {}
+            titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))
+            print(titles['models_exec_kmer'])
             for model in models:
                 print('\n\n'+type(model).__name__)
                 amr.process_model_results(output_results_path=output_results_path,
