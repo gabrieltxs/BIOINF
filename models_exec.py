@@ -21,7 +21,7 @@ import argparse
 def main():
     # Parse command-line arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=5,
+    parser.add_argument("-k", "--k_mer", type=int, choices=range(2, 12), default=8,
                         help="The k_mer argument (an integer from 2 to 11, default: 5)")
     parser.add_argument("-pk", "--pathk", default=os.path.join(os.getcwd(), 'lib'),
                         help="The path kmerX argument (default: 'lib/kmer' in the current directory)")
@@ -29,7 +29,7 @@ def main():
                         help="The path features argument (default: 'lib/target' in the current directory)")
     parser.add_argument("-o", "--output", default=os.path.join(os.getcwd(), 'results'),
                         help="The output results path argument (default: 'results' in the current directory)")
-    parser.add_argument("-e", "--entry", default='kmer',
+    parser.add_argument("-e", "--entry", default='boost',
                         help="The argument that defines the type of entry of the ml model (default = 'kmer')")
     
     args = parser.parse_args()
@@ -62,14 +62,33 @@ def main():
             titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))
             print(titles['models_exec_kmer'])
             for model in models:
-                print('\n\n'+type(model).__name__)
-                amr.process_model_results(output_results_path=output_results_path,
-                                          folder=folder,
-                                          model=model,
-                                          kmer=args.k_mer,
-                                          antibiotic_dfs=antibiotic_dfs,
-                                          input_kmer_path=input_kmer_path,
-                                          entry=entry)
+                for k in range(8, 9):
+                        print(f"Kmer Analysis: {k}")
+                        print('\n\n'+type(model).__name__)
+                        amr.process_model_results(output_results_path=output_results_path,
+                                                folder=folder,
+                                                model=model,
+                                                kmer=k,
+                                                antibiotic_dfs=antibiotic_dfs,
+                                                input_kmer_path=input_kmer_path,
+                                                entry=entry)
+    if entry == 'boost':
+        for folder in tqdm(folders):
+            amr.create_folder(output_results_path, folder)
+            titles = {}
+            titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))
+            print(titles['boosttimes'])
+            for model in models:
+                for k in range(8, 9):
+                        print(f"Kmer Analysis: {k}")
+                        print('\n\n'+type(model).__name__)
+                        amr.process_model_results(output_results_path=output_results_path,
+                                                folder=folder,
+                                                model=model,
+                                                kmer=k,
+                                                antibiotic_dfs=antibiotic_dfs,
+                                                input_kmer_path=input_kmer_path,
+                                                entry=entry)
     elif entry == 'gexp':
         titles = {}
         titles = amr.read_ascii_art(os.path.join(os.getcwd(), 'titles.txt'))

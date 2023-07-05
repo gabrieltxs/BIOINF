@@ -2,14 +2,24 @@ import os
 import re
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 base_path = os.path.join(os.getcwd(), 'results')  # base folder path
 
-folders = ['amr', 'dt', 'tpt', 'vf', 'wgs', 'gpa']
+folders = ['amr', 'dt', 'tpt', 'vf', 'wgs', 'gexp']
+folders = [folder for folder in os.listdir('results') if os.path.isdir(os.path.join('results', folder)) and not folder.startswith(".git")]
 pattern = r'(\d+\.\d+);(\d+\.\d+);'
 k = 8
 # Create a figure and subplots for each folder
 fig, axs = plt.subplots(len(folders), 1, figsize=(8, 6 * len(folders)), sharex=True)
+
+
+# Define the columns for the dataframes
+columns = ['ceftazidime', 'ciprofloxacin', 'meropenem', 'tobramycin']
+
+# Create empty dataframes
+validation_df = pd.DataFrame(columns=columns)
+test_df = pd.DataFrame(columns=columns)
 
 # Traverse the folders
 for i, folder in enumerate(folders):
@@ -21,7 +31,7 @@ for i, folder in enumerate(folders):
     # Traverse the files in the folder
     for file_name in os.listdir(folder_path):
         file_path = os.path.join(folder_path, file_name)
-        if re.search(str(k), file_name):
+        if re.search(str(k) + str('.txt'), file_name):
 
             # Open the file and extract the values using regular expressions
             with open(file_path, 'r') as file:
@@ -34,31 +44,10 @@ for i, folder in enumerate(folders):
                             validation_scores.append(values[0])
                             test_scores.append(values[1])
 
-    # Plot the scores in the respective subplot
-    ax = axs[i]
-    x = np.arange(len(validation_scores))
-    width = 0.4
+    # Append scores to respective dataframes
+    validation_df.loc[folder] = validation_scores
+    test_df.loc[folder] = test_scores
 
-    ax.bar(x - width/2, validation_scores, width, align='center', alpha=0.8, label='Validation F1-score')
-    ax.bar(x + width/2, test_scores, width, align='center', alpha=0.8, label='Test F1-score')
-
-    ax.set_ylim(0.4, 1)
-    ax.set_ylabel('F1-score')
-    ax.set_title(folder.capitalize())
-    category = ['ceftazidime', 'ciprofloxacin', 'meropenem', 'tobramycin']
-    ax.set_xticks(x)
-    ax.set_xticklabels(category)
-    ax.legend()
-
-    # Add value labels to each bar
-    for j, v in enumerate(validation_scores):
-        ax.text(x[j] - width/2, v + 0.01, str(round(v, 3)), ha='center', va='bottom')
-    for j, v in enumerate(test_scores):
-        ax.text(x[j] + width/2, v + 0.01, str(round(v, 3)), ha='center', va='bottom')
-
-# Adjust spacing between subplots
-plt.tight_layout()
-
-# Save the plot as an image file
-output_file = os.path.join(os.getcwd(), f"scores_plot{str(k)}.png")
-plt.savefig(output_file)
+    # Save dataframes as CSV files
+    validation_df.to_csv('lib\genes_eda_data\\validation_scores.csv', sep=';', index_label='Folder')
+    test_df.to_csv('lib\genes_eda_data\\test_scores.csv', sep=';', index_label='Folder')

@@ -2,7 +2,7 @@
     "kmer": {
       "type": "int",
       "choices": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-      "value": 5,
+      "value": 7,
       "help": "The k_mer argument (an integer from 2 to 11, default: 5)"
     },
     "pathk": {
@@ -25,7 +25,8 @@
     },
     "entry": {
       "value": 
-        ["kmer"]
+        ["kmer"
+      ]
       ,
       "help": "The argument that defines the type of entry of the ml model (default = 'kmer')"
     }

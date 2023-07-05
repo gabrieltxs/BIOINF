@@ -9,6 +9,7 @@ scaffold/
 *-b.txt
 lib/kmer/
 results/
+lib/boost/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

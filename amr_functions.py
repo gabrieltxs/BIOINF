@@ -219,8 +219,8 @@ def run_cv(X_train, y_train, params):
         start_time = time.time()
 
         # initialize a LightGBM classifier with the provided hyperparameters, and fit it to the training data
-        model = lgb.LGBMClassifier(**params, random_state=42, device='gpu', gpu_platform_id=0, gpu_device_id=0)
-        model.fit(train_X, train_y, eval_set=[(val_X, val_y)], early_stopping_rounds=10, verbose=0)
+        model = lgb.LGBMClassifier(**params, random_state=42)
+        model.fit(train_X, train_y, eval_set=[(val_X, val_y)], early_stopping_rounds=20, verbose=0)
 
         # Stop the timer
         end_time = time.time()
@@ -365,34 +365,70 @@ def scaffold_gene(fasta_folder: str, output_path: str) -> None:
                 with open(output_file, "w") as out:
                     out.write(current_sequence)
 
-def add_df2_to_df1(df1, df2, output_path, k, multiplier = 1):
+def add_df2_to_df1(df1, df2):
     """
     Adds the corresponding values from df2, multiplied by the specified multiplier, 
     to each cell in df1 at row 'xyz' and every column in df1 that also exists in df2.
     
     Args:
-    df1: pandas dataframe, the dataframe to update
-    df2: pandas dataframe, the dataframe to use for adding values to df1
-    output_path: str, the path to save the updated df1 dataframe
-    k: int, value of the size of k
-    multiplier: int or float, the value to multiply each column in df2 by before adding it to df1
+        df1 (pandas.DataFrame): The dataframe to update.
+        df2 (pandas.DataFrame): The dataframe to use for adding values to df1.
+        multiplier (int or float): The value to multiply each column in df2 by before adding it to df1.
     
     Returns:
-    None
+        pandas.DataFrame: The updated dataframe df1.
     """
-    # iterate over all columns in df1
-    for row in tqdm(df2.index.tolist(), desc='Strains proccessed'):
-        for col in df2.columns:
+    # Create a mask to identify common columns in both dataframes
+    common_columns = df1.columns.intersection(df2.columns)
+    
+    # Iterate over the common columns and update the corresponding cells in df1
+    for col in tqdm(common_columns, desc='Processing'):
+        df1[col] = (df1[col] + df2[col])
+    
+    return df1
 
-            # check if the specified column exists in both dataframes
-            if col in df1.columns:
-                # add every cell in df2 at row 'xyz', column 'col' to the equivalent cell in df1
-                df1.loc[row, col] = df1.loc[row, col] * df2.loc[row, col] * multiplier
-            #else:
-                #print(f"The '{col}' column does not exist in df2.")
+def merge_dataframes(df1, df2):
+    # Create a mask with the union of columns of both dataframes
+    mask = list(set(df1.columns) | set(df2.columns))
+    
+    # Remove duplicates from the mask and sort it
+    mask = sorted(list(dict.fromkeys(mask)))
+    
+    # Get indices of df1 as a list
+    rows = df1.index.tolist()
+    
+    # Create a new dataframe to store the merged data
+    merged_df = pd.DataFrame(index=rows, columns=mask)
+    
+    # Iterate over the columns in the mask
+    for col in tqdm(mask, desc='Processing'):
+        try:
+            merged_df[col] = df1[col] + df2[col]
+        except Exception as e:
+            try:
+                merged_df[col] = df1[col]
+
+            except Exception as e:
+                merged_df[col] = df2[col]
+    return merged_df
+
+"""        # Check if the column exists in df1 and df2
+        if col in df1.columns and col in df2.columns:
+            # Add the sum of values from df1 and df2 to the merged dataframe
+            merged_df[col] = df1[col] + df2[col]
         
-    # save the updated df1 dataframe to the specified output path
-    df1.to_csv(os.path.join(os.getcwd(),output_path,'Aboost'+'.csv'), index=True, sep=';')
+        # Check if the column exists only in df1
+        elif col in df1.columns:
+            # Add the values from df1 to the merged dataframe
+            merged_df[col] = df1[col]
+        
+        # Check if the column exists only in df2
+        elif col in df2.columns:
+            # Add the values from df2 to the merged dataframe
+            merged_df[col] = df2[col]"""
+    
+    
+
     
 def times_df2_to_df1(df1, df2, output_path, multiplier = 1):
     """
@@ -425,7 +461,6 @@ def times_df2_to_df1(df1, df2, output_path, multiplier = 1):
     
     df1.to_csv(os.path.join(os.getcwd(),output_path,'Tboost'+'.csv'), index=True, sep=';')
     
-
 def count_files(directory):
     """
     Counts the number of files in a directory.
@@ -1091,8 +1126,6 @@ def get_folders(directory):
                 folders.append(item)  # Add the folder name to the list
     return folders  # Return the list of folder names
 
-
-
 def process_model_results(output_results_path, 
                           folder, 
                           model, 
@@ -1126,7 +1159,9 @@ def process_model_results(output_results_path,
             print(antibiotic)
             f.write(f'\n{antibiotic};')
             if entry == 'kmer':
-                xis = pd.read_parquet(os.path.join(input_kmer_path,'kmer', folder, 'kmer' + str(kmer) + '.parquet'))
+                xis = pd.read_parquet(os.path.join(input_kmer_path,entry, folder, 'kmer' + str(kmer) + '.parquet'))
+            if entry == 'boost':
+                xis = pd.read_parquet(os.path.join(input_kmer_path,entry, folder, 'kmer' + str(kmer) + '.parquet'))
             elif entry == 'gexp':
                 xis = pd.read_csv(os.path.join(input_kmer_path,'gexp', 'gexp.csv'), sep=';', header=0)
                 # Sets the index of the DataFrame to the first column and drops it
@@ -1191,7 +1226,7 @@ def process_model_results(output_results_path,
 
             # Run Bayesian optimization
             optimizer = BayesianOptimization(f=lgbm_cv, pbounds=pbounds, random_state=42)
-            optimizer.maximize(init_points=2, n_iter=2)
+            optimizer.maximize(init_points=3, n_iter=3)
 
             # Print best hyperparameters
             print(optimizer.max)
@@ -1216,8 +1251,6 @@ def process_model_results(output_results_path,
             f.write('\n\n\n')
 
         f.write('\n\n')
-
-
 
 def extract_antibiotic_names(folder_path):
     """
