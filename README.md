@@ -2,7 +2,7 @@
 This repository contains a Python script for predicting antimicrobial resistance (AMR) using the LGBMClassifier model. The script reads input datasets from a directory, applies feature extraction techniques to obtain k-mer features, trains and tests the models using cross-validation, and outputs the results in text files.
 
 
-![PatricDB (5) vpd (1)-1](https://github.com/gabrieltxs/BIOINF/assets/43249674/9cdfa1a4-5ec0-4037-bd3a-06343f0a7c05)
+![PatricDB (5) vpd (1)-1](https://github.com/gabrieltxs/BIOINF/assets/43249674/3adce050-5492-4349-8504-7e7744466bfc)
 
 
 ## Getting Started
