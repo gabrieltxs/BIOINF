@@ -10,7 +10,7 @@ scaffold/
 lib/kmer/
 results/
 lib/boost/
-
+lib/bond/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
