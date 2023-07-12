@@ -11,6 +11,8 @@ run:
 	python script_gexp.py -j start_data_gexp.json
 	python script_target.py -j start_data_target.json
 	python script_models.py -j start_data_models.json
+	python script_boost.py -j start_data_boost.json
+	python plot.py
 
 
 scaffold:
@@ -28,6 +30,12 @@ target:
 models:
 	python script_models.py -j start_data_models.json
 
+boost:
+	python script_boost.py -j start_data_boost.json
+
+plot:
+	python plot.py
+
 
 scaffoldunix:
 	python script_scaffold.py -j start_data_models_unix.json
@@ -44,3 +52,5 @@ targetunix:
 modelsunix:
 	python script_models.py -j start_data_models_unix.json
 
+boostunix:
+	python script_boost.py -j start_data_boost_unix.json

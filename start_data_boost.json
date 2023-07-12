@@ -1,0 +1,20 @@
+{
+  "kmer": {
+    "type": "int",
+    "choices": [2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+    "value": 8,
+    "help": "The kmer argument (an integer from 2 to 11, default: 5)"
+  },
+  "pathk": {
+    "value": "lib\\kmer",
+    "help": "The path argument (default: 'scaffold' in the current directory)"
+  },
+  "output": {
+    "value": "lib",
+    "help": "The output path argument (default: 'lib_files/kmer' in the current directory)"
+  },
+  "func": {
+    "value": ["mult","bond"],
+    "help": "The function argument (default: main-scaffold) (Op.: boost, bond)"
+  }
+}

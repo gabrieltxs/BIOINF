@@ -33,6 +33,7 @@ import lightgbm as lgb
 
 # Import visualization libraries
 import matplotlib.pyplot as plt
+from tabulate import tabulate
 
 # Set seed for reproducibility
 from random import seed
@@ -332,8 +333,7 @@ def scaffold_gene(fasta_folder: str, output_path: str) -> None:
                 line = line.strip()
                 if line.startswith(">"):
                     # Get the strain name from the header line
-                    current_strain = line.split('[Pseudomonas')[1].split('|')[0].strip()
-                    current_strain = 'Pseudomonas ' + current_strain
+                    current_strain = line.rsplit('[', 1)[1].split('|')[0].strip()
                     # Open the output file for the current strain
                     output_file = os.path.join(output_for_file, f"{current_strain}.fasta")
                     if os.path.exists(output_file):
@@ -411,25 +411,7 @@ def merge_dataframes(df1, df2):
             except Exception as e:
                 merged_df[col] = df2[col]
     return merged_df
-
-"""        # Check if the column exists in df1 and df2
-        if col in df1.columns and col in df2.columns:
-            # Add the sum of values from df1 and df2 to the merged dataframe
-            merged_df[col] = df1[col] + df2[col]
         
-        # Check if the column exists only in df1
-        elif col in df1.columns:
-            # Add the values from df1 to the merged dataframe
-            merged_df[col] = df1[col]
-        
-        # Check if the column exists only in df2
-        elif col in df2.columns:
-            # Add the values from df2 to the merged dataframe
-            merged_df[col] = df2[col]"""
-    
-    
-
-    
 def times_df2_to_df1(df1, df2, output_path, multiplier = 1):
     """
     Adds the corresponding values from df2, multiplied by the specified multiplier, 
@@ -959,8 +941,10 @@ def process_specialty_genes_data(filename, list_genomes_path):
         df.to_csv(os.path.join(df_input_ml, f"{propertie}.csv"))
 
 
-    merged_kmer = compare_and_add(df_return[0], df_return[1])
-    merged_kmer = compare_and_add(merged_kmer, df_return[2])
+    merged_kmer = df_return[0]
+
+    for i in range(1, len(df_return)):
+        merged_kmer = compare_and_add(merged_kmer, df_return[i])
 
     merged_kmer.to_csv(os.path.join(df_input_ml, "gexp.csv"), sep=';')
 
@@ -1027,7 +1011,7 @@ def scaffold_wgs(file_path, output):
             for line_idx, line in enumerate(tqdm(fasta, total=total_lines, desc="Reading lines", unit="line", colour='green', leave=True)):
                 if line[0] == '>':
                     # Extract information from the header line6
-                    n_contig = line.split('contig_')[1].split()[0]
+                    n_contig = line.split('contig')[1].split()[0]
                     fna_name = line.split('[')[1].split('|')[0]
 
                     if n_contig == '1':
@@ -1160,7 +1144,9 @@ def process_model_results(output_results_path,
             f.write(f'\n{antibiotic};')
             if entry == 'kmer':
                 xis = pd.read_parquet(os.path.join(input_kmer_path,entry, folder, 'kmer' + str(kmer) + '.parquet'))
-            if entry == 'boost':
+            elif entry == 'boost':
+                xis = pd.read_parquet(os.path.join(input_kmer_path,entry, folder, 'kmer' + str(kmer) + '.parquet'))
+            elif entry == 'bond':
                 xis = pd.read_parquet(os.path.join(input_kmer_path,entry, folder, 'kmer' + str(kmer) + '.parquet'))
             elif entry == 'gexp':
                 xis = pd.read_csv(os.path.join(input_kmer_path,'gexp', 'gexp.csv'), sep=';', header=0)
@@ -1182,8 +1168,8 @@ def process_model_results(output_results_path,
             # Split the data into training and testing sets
             X_train, X_test, y_train, y_test = model_selection.train_test_split(filtered_xis, yps, test_size=0.3,
                                                                                 random_state=0,
-                                                                                stratify=antibiotic_dfs[antibiotic][
-                                                                                    antibiotic])
+                                                                                stratify=antibiotic_dfs[antibiotic][antibiotic])
+            
             X_train = X_train.reset_index(drop=True)
             y_train = y_train.reset_index(drop=True)
 
@@ -1270,3 +1256,220 @@ def extract_antibiotic_names(folder_path):
             antibiotic_names.append(antibiotic_name)  # Append the antibiotic name to the list
 
     return antibiotic_names  # Return the list of antibiotic names
+
+def get_absolute_path(path):
+    if not os.path.isabs(path):
+        current_dir = os.getcwd()
+        absolute_path = os.path.join(current_dir, path)
+        return absolute_path
+    else:
+        return path
+
+def plot_scatter_top(path):
+    """
+    Analyze the data from a CSV file and generate visualizations and summary tables.
+
+    Args:
+        path (str): The path to the CSV file.
+
+    Returns:
+        None
+    """
+    # Read the CSV file using pandas
+    df = pd.read_csv(os.path.join(get_absolute_path(path),'test_scores.csv'), delimiter=';')
+
+    # Extract the column names excluding the first column
+    columns = df.columns[1:]
+
+
+
+
+    # Create a new DataFrame to store the top values for each column
+    top_values_df = pd.DataFrame(columns=columns)
+
+    # Iterate over each column and add the top 5 values to the new DataFrame
+    for column in columns:
+        top_values = df.nlargest(5, column)
+        top_values_df[column] = top_values[column].values
+
+    # Print the new DataFrame using tabulate
+    print(tabulate(top_values_df, headers='keys', tablefmt='psql'))
+
+
+
+
+    # Create a new DataFrame to store the top values for each antibiotic and their combinations
+    best_f1 = pd.DataFrame(columns=["Combination", "Antibiotic", "F1-Score"])
+
+    # Iterate over each column and find the row with the maximum value
+    for column in columns:
+        max_row_index = df[column].idxmax()
+        combination = df.loc[max_row_index, "Folder"]
+        antibiotic = column
+        f1_score = df.loc[max_row_index, column]
+        best_f1 = best_f1.append({"Combination": combination, "Antibiotic": antibiotic, "F1-Score": f1_score}, ignore_index=True)
+
+    # Print the new DataFrame using tabulate
+    print(tabulate(best_f1, headers='keys', tablefmt='psql'))
+
+
+
+
+
+    # Set the figure size to be four times wider
+    plt.figure(figsize=(20, 10))
+
+    # Iterate over each column and plot the top 5 values as scatter points
+    for i, column in enumerate(columns):
+        color = plt.cm.tab10(i)  # Get a color from the tab10 colormap for each column
+
+        # Filter the top 5 rows for the current column
+        top_5_df = df.nlargest(5, column)
+
+        plt.scatter(top_5_df['Folder'], top_5_df[column], label=column, color=color)
+
+        # Connect the scatter points to the x-axis with dotted lines of the same color
+        for x, y in zip(top_5_df['Folder'], top_5_df[column]):
+            plt.plot([x, x], [0, y], linestyle='dotted', color=color)
+
+        # Find the maximum value for the column
+        max_value = top_5_df[column].max()
+
+        # Draw a horizontal line at the maximum value with the same color
+        plt.axhline(y=max_value, color=color, linestyle='--')
+
+    # Set plot labels and title
+    plt.xlabel('Boost Combination')
+    plt.ylabel('Values')
+    plt.title('F1-Score (Best Performers)')
+
+    # Rotate x-axis labels by 45 degrees
+    plt.xticks(rotation=90)
+
+    # Set the y-axis limits
+    plt.ylim(0.5, 1)
+
+    # Add a legend
+    plt.legend()
+
+    # Adjust the subplot parameters to expand downwards
+    plt.subplots_adjust(bottom=0.2)
+    # Save the plot in the current folder
+    plt.savefig(os.path.join(get_absolute_path(path),'top-scatter.png'))
+
+
+def plot_scatter_full(path):
+    """
+    Read the CSV file, extract column names, and plot scatter points.
+
+    Args:
+        csv_file_path (str): The path to the CSV file.
+
+    Returns:
+        None
+    """
+    # Read the CSV file using pandas
+    df = pd.read_csv(os.path.join(get_absolute_path(path),'test_scores.csv'), delimiter=';')
+
+    # Extract the column names excluding the first column
+    columns = df.columns[1:]
+
+    # Set the figure size to be four times wider
+    plt.figure(figsize=(20, 10))
+
+    # Iterate over each column and plot the values as scatter points
+    for i, column in enumerate(columns):
+        color = plt.cm.tab10(i)  # Get a color from the tab10 colormap for each column
+        plt.scatter(df['Folder'], df[column], label=column, color=color)
+
+        # Connect the scatter points to the x-axis with dotted lines of the same color
+        for x, y in zip(df['Folder'], df[column]):
+            plt.plot([x, x], [0, y], linestyle='dotted', color=color)
+
+        # Find the maximum value for the column
+        max_value = df[column].max()
+
+        # Draw a horizontal line at the maximum value with the same color
+        plt.axhline(y=max_value, color=color, linestyle='--')
+
+    # Set plot labels and title
+    plt.xlabel('Boost Combination')
+    plt.ylabel('Values')
+    plt.title('F1-Score')
+
+    # Rotate x-axis labels by 45 degrees
+    plt.xticks(rotation=90)
+
+    # Set the y-axis limits
+    plt.ylim(0.5, 1)
+
+    # Add a legend
+    plt.legend()
+
+    # Adjust the subplot parameters to expand downwards
+    plt.subplots_adjust(bottom=0.2)
+
+    # Save the plot in the specified folder
+    plt.savefig(os.path.join(get_absolute_path(path),'full-scatter.png'))
+
+
+def compile_results(f1_score_path,output, k):
+    """
+    Process the folders in the specified base path and generate dataframes and CSV files.
+
+    Args:
+        base_path (str): The base folder path.
+        k (int): The value of k.
+
+    Returns:
+        None
+    """
+    f1_score_path = get_absolute_path(f1_score_path)
+    output = get_absolute_path(output)
+    folders = [folder for folder in os.listdir(f1_score_path) if os.path.isdir(os.path.join(f1_score_path, folder)) and not folder.startswith(".git")]
+    pattern = r'(\d+\.\d+);(\d+\.\d+);'
+
+    # Create a figure and subplots for each folder
+    fig, axs = plt.subplots(len(folders), 1, figsize=(8, 6 * len(folders)), sharex=True)
+
+    # Define the columns for the dataframes
+    columns = extract_antibiotic_names('lib\\target')
+    #columns = ['ceftazidime', 'ciprofloxacin', 'meropenem', 'tobramycin']
+
+    # Create empty dataframes
+    validation_df = pd.DataFrame(columns=columns)
+    test_df = pd.DataFrame(columns=columns)
+
+    # Traverse the folders
+    for i, folder in enumerate(folders):
+        folder_path = os.path.join(f1_score_path, folder)
+
+        validation_scores = []
+        test_scores = []
+
+        # Traverse the files in the folder
+        for file_name in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, file_name)
+            if re.search(str(k) + str('.txt'), file_name):
+
+                # Open the file and extract the values using regular expressions
+                with open(file_path, 'r') as file:
+                    contents = file.read()
+                    matches = re.findall(pattern, contents)
+                    if matches:
+                        for j, match in enumerate(matches):
+                            if j < 4:  # Limit to the first four matches
+                                values = [float(value) for value in match]
+                                validation_scores.append(values[0])
+                                test_scores.append(values[1])
+
+        # Append scores to respective dataframes
+        validation_df.loc[folder] = validation_scores
+        test_df.loc[folder] = test_scores
+
+        # Save dataframes as CSV files
+        validation_df.to_csv(os.path.join(output, 'validation_scores.csv'), sep=';', index_label='Folder')
+        test_df.to_csv(os.path.join(output, 'test_scores.csv'), sep=';', index_label='Folder')
+
+    # Save the scatter plot in the specified folder
+    plt.savefig(os.path.join(output, 'full-scatter.png'))
